@@ -171,7 +171,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
   }
 
   return (
-    <div className="flex flex-col h-full w-full max-w-4xl mx-auto py-6">
+    <div className="flex flex-col h-full w-full max-w-4xl py-6">
         <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
             <div className="space-y-8">
             {activeConversation.messages.map((message, index) => (
