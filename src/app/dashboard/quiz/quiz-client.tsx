@@ -4,12 +4,15 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { competitionQuiz, CompetitionQuizOutput } from '@/ai/flows/competition-quiz';
-import { Loader2, Lightbulb, Star, Send } from 'lucide-react';
+import { sendQuizResultsEmail } from '@/ai/flows/send-quiz-results-email';
+import { Loader2, Lightbulb, Star, Send, Share2, GripVertical, CheckCircle } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const quizQuestions = [
   { id: 'q1', type: 'mcq', text: 'Which of these subjects are you most interested in?', options: ['Business and Marketing', 'Finance and Accounting', 'Technology and Coding', 'Public Speaking'] },
@@ -22,19 +25,40 @@ const quizQuestions = [
 
 export function QuizClient() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [results, setResults] = useState<CompetitionQuizOutput | null>(null);
+  const [rankedRecommendations, setRankedRecommendations] = useState<string[]>([]);
   const { toast } = useToast();
-  const form = useForm();
+  const form = useForm({
+    defaultValues: {
+      recommendationCount: 5,
+    },
+  });
 
+  const handleDragStart = (e: React.DragEvent<HTMLLIElement>, index: number) => {
+    e.dataTransfer.setData('draggedIndex', index.toString());
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLIElement>, dropIndex: number) => {
+    const draggedIndex = parseInt(e.dataTransfer.getData('draggedIndex'));
+    const newRanked = [...rankedRecommendations];
+    const draggedItem = newRanked[draggedIndex];
+    newRanked.splice(draggedIndex, 1);
+    newRanked.splice(dropIndex, 0, draggedItem);
+    setRankedRecommendations(newRanked);
+  };
+  
   async function onSubmit(data: any) {
     setIsLoading(true);
     setResults(null);
     try {
       const result = await competitionQuiz({
         responses: data,
-        studentName: "Student", // Replace with actual student name from auth
+        studentName: "Student",
+        recommendationCount: data.recommendationCount,
       });
       setResults(result);
+      setRankedRecommendations(result.recommendations);
     } catch (error) {
       console.error('Quiz submission error:', error);
       toast({
@@ -47,6 +71,41 @@ export function QuizClient() {
     }
   }
 
+  const handleSendEmail = async () => {
+    setIsSendingEmail(true);
+    try {
+        await sendQuizResultsEmail({
+            studentName: 'Student', // Replace with actual student name
+            rankedCompetitions: rankedRecommendations
+        });
+        toast({
+            title: "Email Sent!",
+            description: "Your competition list has been sent to Ms. Herbert.",
+            action: <ToastAction altText="Close"><CheckCircle className="text-green-500" /></ToastAction>
+        });
+    } catch(e) {
+        console.error("Failed to send email", e);
+        toast({
+            variant: 'destructive',
+            title: 'Email Failed',
+            description: 'There was a problem sending your results. Please try again later.'
+        });
+    } finally {
+        setIsSendingEmail(false);
+    }
+  };
+
+
+  if (isLoading) {
+      return (
+          <div className="flex flex-col items-center justify-center text-center p-8 space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <h2 className="text-2xl font-semibold">Finding your perfect match...</h2>
+              <p className="text-muted-foreground">Our AI advisor is analyzing your responses.</p>
+          </div>
+      );
+  }
+
   if (results) {
     return (
       <Card className="bg-muted/50">
@@ -57,8 +116,22 @@ export function QuizClient() {
         <CardContent className="space-y-6">
           <div>
             <h3 className="font-semibold mb-2 flex items-center gap-2"><Star className="h-5 w-5" /> Recommended Competitions</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              {results.recommendations.map((rec, i) => <li key={i}>{rec}</li>)}
+            <p className="text-sm text-muted-foreground mb-4">Drag and drop to rank your preferred competitions before sharing.</p>
+            <ul className="space-y-2">
+                {rankedRecommendations.map((rec, index) => (
+                    <li 
+                        key={rec} 
+                        className="flex items-center gap-2 p-3 rounded-md border bg-background cursor-grab active:cursor-grabbing"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => handleDrop(e, index)}
+                    >
+                        <GripVertical className="h-5 w-5 text-muted-foreground" />
+                        <span className="font-medium">{index + 1}.</span>
+                        <span>{rec}</span>
+                    </li>
+                ))}
             </ul>
           </div>
           <div>
@@ -66,8 +139,31 @@ export function QuizClient() {
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{results.feedback}</p>
           </div>
         </CardContent>
-        <CardFooter>
-          <Button onClick={() => setResults(null)}>Take Quiz Again</Button>
+        <CardFooter className="flex justify-between">
+          <Button onClick={() => setResults(null)} variant="outline">Take Quiz Again</Button>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button><Share2 className="mr-2"/> Share with Ms. Herbert</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Confirm Your Ranked List</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        You are about to send the following ranked list of competitions to Ms. Herbert. Please review it before sending.
+                        <ol className="list-decimal list-inside my-4 space-y-1 rounded-md border p-4 bg-background">
+                            {rankedRecommendations.map(rec => <li key={rec}>{rec}</li>)}
+                        </ol>
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSendEmail} disabled={isSendingEmail}>
+                         {isSendingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        Confirm & Send
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </CardFooter>
       </Card>
     );
@@ -76,6 +172,31 @@ export function QuizClient() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+            control={form.control}
+            name="recommendationCount"
+            render={({ field }) => (
+                <FormItem className="rounded-lg border p-4 space-y-4">
+                    <FormLabel className="font-semibold text-base">How many competition recommendations would you like?</FormLabel>
+                    <FormControl>
+                       <div className="flex items-center gap-4">
+                         <Slider
+                            min={2}
+                            max={5}
+                            step={1}
+                            defaultValue={[field.value]}
+                            onValueChange={(value) => field.onChange(value[0])}
+                         />
+                         <span className="font-bold text-lg text-primary w-8 text-center">{field.value}</span>
+                       </div>
+                    </FormControl>
+                    <FormDescription>
+                        Choose between 2 and 5 recommendations. The default is 5.
+                    </FormDescription>
+                </FormItem>
+            )}
+        />
+
         {quizQuestions.map((q) => (
           <FormField
             key={q.id}
