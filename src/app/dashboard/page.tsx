@@ -27,15 +27,10 @@ import {
 import { useNotesStore } from '@/store/notes-store';
 import { useGccrStore } from '@/store/gccr-store';
 import { useQuizStore } from '@/store/quiz-store';
-
-// Mock Data - In a real app, this would come from state management or an API
-const user = {
-  name: 'Student Name',
-  grade: '11th Grade',
-  avatar: 'https://placehold.co/100x100.png',
-};
+import { useUserStore } from '@/store/user-store';
 
 export default function DashboardHomePage() {
+  const { user } = useUserStore();
   const { notes } = useNotesStore();
   const favoritedNotes = notes.filter(note => note.isFavorite);
 
@@ -142,7 +137,7 @@ export default function DashboardHomePage() {
           <Card>
             <CardContent className="pt-6 flex flex-col items-center text-center">
               <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="student avatar" />
+                <AvatarImage src={'https://placehold.co/100x100.png'} alt={user.name} data-ai-hint="student avatar" />
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <h3 className="text-xl font-semibold">{user.name}</h3>

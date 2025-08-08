@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { UserNav } from '@/components/user-nav';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from './ui/button';
-import { Menu, Bot, FolderGit2, Book, CalendarCheck, ClipboardList, Link as LinkIcon, Home } from 'lucide-react';
+import { Menu, Bot, FolderGit2, Book, CalendarCheck, ClipboardList, Link as LinkIcon, Home, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from './logo';
 import { SammyLogo } from './sammy-logo';
@@ -18,6 +18,7 @@ const navItems = [
     { href: '/dashboard/progress', label: 'Progress Plan', icon: CalendarCheck },
     { href: '/dashboard/quiz', label: 'Competition Quiz', icon: ClipboardList },
     { href: '/dashboard/resources', label: 'Quick Resources', icon: LinkIcon },
+    { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
 export function DashboardHeader() {
