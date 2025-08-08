@@ -31,12 +31,13 @@ const digitizePrompt = ai.definePrompt({
   name: 'digitizeNotePrompt',
   input: { schema: DigitizeNoteInputSchema },
   output: { schema: DigitizeNoteOutputSchema },
-  prompt: `You are an OCR (Optical Character Recognition) and text extraction expert. Your task is to extract all readable text from the provided file. The file could be an image, a PDF, or a document.
+  prompt: `You are an OCR (Optical Character Recognition) and text extraction expert. Your task is to extract all readable text from the provided file.
 
   - Analyze the provided file.
   - Extract all text content accurately.
   - If the file is an image with handwriting, do your best to transcribe it.
   - Format the output as clean Markdown. Preserve basic formatting like headers, lists, and paragraphs if possible.
+  - If you detect tabular data, format it as a proper Markdown table.
   - Do not add any commentary or text that was not present in the original file.
   
   File for digitization:
