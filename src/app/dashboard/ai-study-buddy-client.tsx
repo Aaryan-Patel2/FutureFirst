@@ -123,10 +123,8 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     setTimeout(resizeTextarea, 0);
   
     try {
-      addMessage(convoId, { role: 'assistant', content: '' });
-      
       const updatedConversation = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId)!;
-      const conversationHistory = updatedConversation.messages.slice(0, -1).map(m => `${m.role}: ${m.content}`).join('\n');
+      const conversationHistory = updatedConversation.messages.map(m => `${m.role}: ${m.content}`).join('\n');
       
       const aiInput: AIStudyBuddyInput = {
         fileDataUri: activeConversation.fileContext?.dataUri,
@@ -135,25 +133,10 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
       };
       
       const result = await aiStudyBuddy(aiInput);
-      
-      const convo = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId);
-      if (convo) {
-          const placeholderIndex = convo.messages.findIndex(m => m.role === 'assistant' && m.content === '');
-          if (placeholderIndex > -1) {
-              useAiStudyBuddyStore.getState().deleteMessage(convoId, placeholderIndex);
-          }
-      }
       addMessage(convoId, { role: 'assistant', content: result.response });
 
     } catch (error) {
       console.error('Error with AI Study Buddy:', error);
-      const convo = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId);
-      if (convo) {
-          const placeholderIndex = convo.messages.findIndex(m => m.role === 'assistant' && m.content === '');
-          if (placeholderIndex > -1) {
-              useAiStudyBuddyStore.getState().deleteMessage(convoId, placeholderIndex);
-          }
-      }
       addMessage(convoId, { role: 'assistant', content: "Sorry, I encountered an error. Please try again." });
     } finally {
       setIsLoading(false);
@@ -305,3 +288,5 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     </div>
   );
 }
+
+    
