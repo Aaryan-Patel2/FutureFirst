@@ -6,18 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Save, Trash2, FileText, Star, Sparkles, Upload, Paperclip, X, Loader2 } from 'lucide-react';
+import { PlusCircle, Save, Trash2, FileText, Star, Sparkles, Upload, Paperclip, X, Loader2, Eye, FilePenLine } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useNotesStore, Note } from '@/store/notes-store';
 import { digitizeNote } from '@/ai/flows/digitize-note';
 import { useToast } from '@/hooks/use-toast';
+import ReactMarkdown from 'react-markdown';
 
 export default function NotebookPage() {
   const { notes, addNote, updateNote, deleteNote, toggleFavorite, setFileForDigitization, clearFileForDigitization } = useNotesStore();
   const [activeNoteId, setActiveNoteId] = useState<number | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [isDigitizing, setIsDigitizing] = useState(false);
+  const [editMode, setEditMode] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -32,6 +34,7 @@ export default function NotebookPage() {
 
   const handleSelectNote = (note: Note) => {
     setActiveNoteId(note.id);
+    setEditMode(true); // Always start in edit mode when selecting a new note
   };
 
   const handleNewNote = () => {
@@ -40,6 +43,7 @@ export default function NotebookPage() {
       content: '',
     });
     setActiveNoteId(newNote.id);
+    setEditMode(true);
   };
 
   const handleContentChange = (content: string) => {
@@ -151,8 +155,18 @@ export default function NotebookPage() {
                 onChange={(e) => handleTitleChange(e.target.value)}
                 className="text-lg font-bold border-0 shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent"
                 placeholder="Note Title"
+                disabled={!editMode}
               />
               <div className="flex items-center gap-1 flex-shrink-0">
+                 {editMode ? (
+                  <Button variant="ghost" size="icon" onClick={() => setEditMode(false)} title="Preview Note">
+                    <Eye className="h-5 w-5 text-muted-foreground hover:text-cyan-400" />
+                  </Button>
+                ) : (
+                  <Button variant="ghost" size="icon" onClick={() => setEditMode(true)} title="Edit Note">
+                    <FilePenLine className="h-5 w-5 text-muted-foreground hover:text-cyan-400" />
+                  </Button>
+                )}
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -160,21 +174,21 @@ export default function NotebookPage() {
                   className="hidden"
                   accept="image/*,.pdf,.doc,.docx"
                 />
-                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Upload for Digitization">
-                  <Upload className="h-5 w-5 text-muted-foreground hover:text-cyan-400" />
+                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Upload for Digitization" disabled={!editMode}>
+                  <Upload className={cn("h-5 w-5 text-muted-foreground", editMode && "hover:text-cyan-400")} />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={handleToggleFavorite} title="Favorite">
                   <Star className={cn("h-5 w-5", activeNote.isFavorite ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                 </Button>
-                 <Button variant="ghost" size="icon" onClick={handleDigitize} disabled={!activeNote.fileForDigitization || isDigitizing} title="Digitize Note">
-                  {isDigitizing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className={cn("h-5 w-5", activeNote.fileForDigitization ? "text-cyan-400" : "text-muted-foreground")} />}
+                 <Button variant="ghost" size="icon" onClick={handleDigitize} disabled={!activeNote.fileForDigitization || isDigitizing || !editMode} title="Digitize Note">
+                  {isDigitizing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className={cn("h-5 w-5", activeNote.fileForDigitization && editMode ? "text-cyan-400" : "text-muted-foreground")} />}
                 </Button>
                 <Button variant="destructive" size="icon" onClick={handleDeleteNote} title="Delete Note">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </CardHeader>
-            {activeNote.fileForDigitization && (
+            {activeNote.fileForDigitization && editMode && (
               <div className="p-4 border-b bg-secondary/30">
                 <div className="flex items-center justify-between gap-2 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground truncate">
@@ -188,12 +202,20 @@ export default function NotebookPage() {
               </div>
             )}
             <CardContent className="p-0 flex-1">
-              <Textarea
-                placeholder="Start writing your notes here... or upload a file and click the ✨ icon to digitize."
-                className="w-full h-full border-0 resize-none focus-visible:ring-0 p-4 bg-transparent"
-                value={activeNote.content}
-                onChange={(e) => handleContentChange(e.target.value)}
-              />
+              {editMode ? (
+                <Textarea
+                  placeholder="Start writing your notes here... or upload a file and click the ✨ icon to digitize."
+                  className="w-full h-full border-0 resize-none focus-visible:ring-0 p-4 bg-transparent"
+                  value={activeNote.content}
+                  onChange={(e) => handleContentChange(e.target.value)}
+                />
+              ) : (
+                <ScrollArea className="h-full">
+                    <article className="prose prose-invert max-w-none p-6 text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-p:text-foreground prose-li:text-foreground">
+                       <ReactMarkdown>{activeNote.content}</ReactMarkdown>
+                    </article>
+                </ScrollArea>
+              )}
             </CardContent>
           </Card>
         ) : (
