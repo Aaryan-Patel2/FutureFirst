@@ -125,11 +125,11 @@ export default function ProgressPlanPage() {
         <Card>
           <CardHeader>
             <CardTitle>My Progress Plan</CardTitle>
-            <CardDescription>Track your study tasks and stay on top of your goals. Currently viewing: <span className="text-primary font-semibold">{currentViewText()}</span> tasks.</CardDescription>
+            <CardDescription>Track your study tasks and stay on top of your goals. Currently viewing: <span className="text-cyan-400 font-semibold">{currentViewText()}</span> tasks.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="w-full bg-muted rounded-full h-2.5">
-              <div className="bg-primary h-2.5 rounded-full transition-all duration-500" style={{ width: `${progressPercentage}%` }}></div>
+              <div className="bg-cyan-400 h-2.5 rounded-full transition-all duration-500" style={{ width: `${progressPercentage}%` }}></div>
             </div>
             <p className="text-right text-sm text-muted-foreground mt-2">{completedTasks} of {totalTasks} tasks completed</p>
           </CardContent>
@@ -149,7 +149,7 @@ export default function ProgressPlanPage() {
             <ScrollArea className="h-72">
                 <div className="space-y-4">
                 {filteredTasks.length > 0 ? filteredTasks.map((task) => (
-                    <div key={task.id} className="flex items-center space-x-4 p-2 rounded-md hover:bg-accent group">
+                    <div key={task.id} className="flex items-center space-x-4 p-2 rounded-md hover:bg-secondary group">
                     <Checkbox
                         id={task.id}
                         checked={task.done}
@@ -190,12 +190,12 @@ export default function ProgressPlanPage() {
               }}
               modifiersStyles={{
                 hasTask: {
-                    border: '2px solid hsl(var(--primary))',
-                    color: 'hsl(var(--primary))'
+                    border: '2px solid hsl(var(--accent))',
+                    color: 'hsl(var(--accent))'
                 },
                 selected: {
-                    backgroundColor: 'hsl(var(--primary))',
-                    color: 'hsl(var(--primary-foreground))'
+                    backgroundColor: 'hsl(var(--accent))',
+                    color: 'hsl(var(--accent-foreground))'
                 }
               }}
             />
@@ -206,7 +206,7 @@ export default function ProgressPlanPage() {
                 <CardTitle>Manage Tasks</CardTitle>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Add Task</Button>
+                        <Button size="sm" className="animated-button"><Plus className="h-4 w-4 mr-2" /> Add Task</Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -237,7 +237,7 @@ export default function ProgressPlanPage() {
                                 <Button
                                     variant={"outline"}
                                     className={cn(
-                                    "w-[240px] justify-start text-left font-normal",
+                                    "col-span-3 justify-start text-left font-normal",
                                     !taskDueDate && "text-muted-foreground"
                                     )}
                                 >

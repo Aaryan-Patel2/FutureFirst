@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
-import { Bot, FolderGit2, Book, CalendarCheck, ClipboardList, Link as LinkIcon, Home } from 'lucide-react';
+import { FolderGit2, Book, CalendarCheck, ClipboardList, Link as LinkIcon, Home } from 'lucide-react';
 import { SammyLogo } from './sammy-logo';
 
 const navItems = [
@@ -23,7 +23,7 @@ export function DesktopSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-background md:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-card md:flex">
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <Logo />
@@ -40,8 +40,8 @@ export function DesktopSidebar() {
                 asChild
                 variant={'ghost'}
                 className={cn(
-                    "w-full justify-start text-foreground",
-                    isActive ? "bg-muted font-semibold text-primary" : "text-muted-foreground"
+                    "w-full justify-start",
+                    isActive ? "bg-secondary font-semibold text-cyan-400" : "text-muted-foreground"
                 )}
               >
                 <Link href={item.href} className="nav-link-hover flex items-center gap-3">

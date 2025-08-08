@@ -78,7 +78,7 @@ export default function NotebookPage() {
         <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
           <CardTitle className="text-lg">My Notes</CardTitle>
           <Button variant="ghost" size="icon" onClick={handleNewNote}>
-            <PlusCircle className="h-5 w-5" />
+            <PlusCircle className="h-5 w-5 text-cyan-400" />
           </Button>
         </CardHeader>
         <ScrollArea className="flex-1">
@@ -88,8 +88,8 @@ export default function NotebookPage() {
                 key={note.id}
                 onClick={() => handleSelectNote(note)}
                 className={cn(
-                  'w-full text-left p-4 border-b hover:bg-accent transition-colors flex items-center justify-between',
-                  activeNote?.id === note.id && 'bg-accent'
+                  'w-full text-left p-4 border-b hover:bg-secondary transition-colors flex items-center justify-between',
+                  activeNote?.id === note.id && 'bg-secondary'
                 )}
               >
                 <div>
@@ -110,7 +110,7 @@ export default function NotebookPage() {
               <Input
                 value={activeNote.title}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                className="text-lg font-bold border-0 shadow-none focus-visible:ring-0 p-0 h-auto"
+                className="text-lg font-bold border-0 shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent"
                 placeholder="Note Title"
               />
               <div className="flex items-center gap-2">
@@ -125,7 +125,7 @@ export default function NotebookPage() {
             <CardContent className="p-0 flex-1">
               <Textarea
                 placeholder="Start writing your notes here... Markdown is supported."
-                className="w-full h-full border-0 resize-none focus-visible:ring-0 p-4"
+                className="w-full h-full border-0 resize-none focus-visible:ring-0 p-4 bg-transparent"
                 value={activeNote.content}
                 onChange={(e) => handleContentChange(e.target.value)}
               />

@@ -143,7 +143,7 @@ export function QuizClient() {
   if (isLoading) {
       return (
           <div className="flex flex-col items-center justify-center text-center p-8 space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <Loader2 className="h-12 w-12 animate-spin text-cyan-400" />
               <h2 className="text-2xl font-semibold">Finding your perfect match...</h2>
               <p className="text-muted-foreground">Our AI advisor is analyzing your responses.</p>
           </div>
@@ -152,27 +152,27 @@ export function QuizClient() {
 
   if (results) {
     return (
-      <Card className="bg-muted/30">
+      <Card className="bg-card/50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Lightbulb className="text-primary" /> Quiz Results</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Lightbulb className="text-cyan-400" /> Quiz Results</CardTitle>
           <CardDescription>Based on your answers, here are our recommendations.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h3 className="font-semibold mb-2 flex items-center gap-2"><Star className="h-5 w-5" /> Recommended Competitions</h3>
+            <h3 className="font-semibold mb-2 flex items-center gap-2"><Star className="h-5 w-5 text-yellow-400" /> Recommended Competitions</h3>
             <p className="text-sm text-muted-foreground mb-4">Drag and drop to rank your preferred competitions before sharing.</p>
             <ul className="space-y-2">
                 {rankedRecommendations.map((rec, index) => (
                     <li 
                         key={rec} 
-                        className="flex items-center gap-2 p-3 rounded-md border bg-background cursor-grab active:cursor-grabbing"
+                        className="flex items-center gap-2 p-3 rounded-md border bg-secondary cursor-grab active:cursor-grabbing"
                         draggable
                         onDragStart={(e) => handleDragStart(e, index)}
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={(e) => handleDrop(e, index)}
                     >
                         <GripVertical className="h-5 w-5 text-muted-foreground" />
-                        <span className="font-medium">{index + 1}.</span>
+                        <span className="font-medium text-cyan-400">{index + 1}.</span>
                         <span>{rec}</span>
                     </li>
                 ))}
@@ -222,7 +222,7 @@ export function QuizClient() {
                                 )}
                             </div>
                             <div className="space-y-2">
-                                <Label>Number of Recommendations: <span className="text-primary font-bold">{refineCount}</span></Label>
+                                <Label>Number of Recommendations: <span className="text-cyan-400 font-bold">{refineCount}</span></Label>
                                 <Slider
                                     value={[refineCount]}
                                     onValueChange={(value) => setRefineCount(value[0])}
@@ -289,7 +289,7 @@ export function QuizClient() {
                             defaultValue={[field.value]}
                             onValueChange={(value) => field.onChange(value[0])}
                          />
-                         <span className="font-bold text-lg text-primary w-8 text-center">{field.value}</span>
+                         <span className="font-bold text-lg text-cyan-400 w-8 text-center">{field.value}</span>
                        </div>
                     </FormControl>
                     <FormDescription>

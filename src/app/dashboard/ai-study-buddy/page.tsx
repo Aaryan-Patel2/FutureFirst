@@ -37,7 +37,7 @@ export default function AiStudyBuddyPage() {
   if (!isClient) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
+        <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-cyan-400 border-t-transparent"></div>
       </div>
     );
   }
@@ -58,8 +58,8 @@ export default function AiStudyBuddyPage() {
                         key={convo.id}
                         onClick={() => setActiveConversationId(convo.id)}
                         className={cn(
-                            'w-full text-left p-3 border-l-4 border-transparent hover:bg-muted/50 transition-all duration-200 group relative cursor-pointer',
-                            activeConversationId === convo.id && 'border-primary bg-muted text-primary-foreground font-semibold'
+                            'w-full text-left p-3 border-l-4 border-transparent hover:bg-secondary/50 transition-all duration-200 group relative cursor-pointer',
+                            activeConversationId === convo.id && 'border-cyan-400 bg-secondary text-foreground font-semibold'
                         )}
                     >
                         <p className="font-medium truncate pr-8">{convo.title}</p>
@@ -93,7 +93,7 @@ export default function AiStudyBuddyPage() {
         </aside>
 
         {/* Main Chat Client */}
-        <main className="flex-1 flex flex-col chat-dark-background">
+        <main className="flex-1 flex flex-col">
              <AiStudyBuddyClient key={activeConversationId} conversationId={activeConversationId} />
         </main>
     </div>

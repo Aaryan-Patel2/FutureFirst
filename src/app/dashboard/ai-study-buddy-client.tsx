@@ -153,10 +153,10 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
 
   if (!activeConversation) {
     return (
-        <div className="flex h-full flex-col items-center justify-center p-4 text-center text-zinc-400">
-            <SammyLogo className="w-24 h-24 mb-4 text-zinc-500" />
-            <h2 className="text-2xl font-semibold text-zinc-200">Welcome to <span className="gradient-text">Sammy AI</span>!</h2>
-            <p className="text-zinc-400">Select a conversation or start a new one to begin.</p>
+        <div className="flex h-full flex-col items-center justify-center p-4 text-center">
+            <SammyLogo className="w-24 h-24 mb-4 text-cyan-400" />
+            <h2 className="text-2xl font-semibold"><span className="gradient-text">Welcome to Sammy AI!</span></h2>
+            <p className="text-muted-foreground">Select a conversation or start a new one to begin.</p>
         </div>
     );
   }
@@ -168,17 +168,17 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
             {activeConversation.messages.map((message, index) => (
                 <div key={index} className={cn('flex items-start gap-4', message.role === 'user' ? 'justify-end' : 'justify-start')}>
                 {message.role === 'assistant' && (
-                    <Avatar className="h-9 w-9 bg-zinc-800 text-zinc-300 flex items-center justify-center shrink-0 border border-zinc-700">
-                       <SammyLogo className="h-6 w-6" />
+                    <Avatar className="h-9 w-9 bg-secondary text-foreground flex items-center justify-center shrink-0 border border-border">
+                       <SammyLogo className="h-6 w-6 text-cyan-400" />
                     </Avatar>
                 )}
-                <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-3', message.role === 'user' ? 'bg-zinc-800 text-zinc-200' : 'bg-transparent text-zinc-300')}>
+                <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-3', message.role === 'user' ? 'bg-secondary text-secondary-foreground' : 'bg-card text-card-foreground')}>
                     {isLoading && index === activeConversation.messages.length - 1 ? (
                          <div className='flex items-center justify-center p-2'>
                             <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />
                         </div>
                     ) : (
-                        <ReactMarkdown className="prose prose-sm prose-invert max-w-none">
+                        <ReactMarkdown className="prose prose-sm prose-invert max-w-none prose-p:text-foreground prose-headings:text-foreground prose-strong:text-foreground">
                             {message.content}
                         </ReactMarkdown>
                     )}
@@ -186,7 +186,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                 {message.role === 'user' && (
                     <Avatar className="h-9 w-9 shrink-0">
                          <AvatarImage src="https://placehold.co/100x100.png" alt="@student" data-ai-hint="student avatar" />
-                        <AvatarFallback className="bg-zinc-800 text-zinc-300"><User size={20} /></AvatarFallback>
+                        <AvatarFallback className="bg-secondary text-secondary-foreground"><User size={20} /></AvatarFallback>
                     </Avatar>
                 )}
                 </div>
@@ -201,7 +201,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                 size="icon"
                 onClick={() => fileInputRef.current?.click()}
                 title={'Upload File'}
-                className="text-zinc-400 hover:text-cyan-400 hover:bg-zinc-700"
+                className="text-muted-foreground hover:text-cyan-400"
             >
                 <Upload className="h-5 w-5" />
             </Button>
@@ -214,7 +214,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
             />
              <Dialog open={isGccrDialogOpen} onOpenChange={setIsGccrDialogOpen}>
                 <DialogTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" title="Select from GCCR" className="text-zinc-400 hover:text-cyan-400 hover:bg-zinc-700">
+                    <Button type="button" variant="ghost" size="icon" title="Select from GCCR" className="text-muted-foreground hover:text-cyan-400">
                         <FolderGit2 className="h-5 w-5" />
                     </Button>
                 </DialogTrigger>
@@ -249,7 +249,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
               onKeyDown={handleKeyDown}
               placeholder="Ask Sammy AI..."
               disabled={isLoading}
-              className="flex-1 resize-none bg-transparent border-0 focus-visible:ring-0 text-zinc-200 placeholder:text-zinc-400"
+              className="flex-1 resize-none bg-transparent border-0 focus-visible:ring-0 text-foreground placeholder:text-muted-foreground"
               rows={1}
             />
             <Button type="button" onClick={handleFormSubmit} disabled={isLoading || !input.trim()} className="animated-button" size="icon">
@@ -257,9 +257,9 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
             </Button>
           </div>
           {activeConversation.fileContext && (
-            <div className="text-center text-xs text-zinc-500 pt-2">
-              Context: <span className="font-semibold text-zinc-400">{activeConversation.fileContext.name}</span>
-              <button onClick={() => clearFileContext(activeConversation!.id)} className="ml-2 text-zinc-500 hover:text-zinc-300">&times;</button>
+            <div className="text-center text-xs text-muted-foreground pt-2">
+              Context: <span className="font-semibold text-foreground">{activeConversation.fileContext.name}</span>
+              <button onClick={() => clearFileContext(activeConversation!.id)} className="ml-2 text-muted-foreground hover:text-foreground">&times;</button>
             </div>
           )}
         </div>

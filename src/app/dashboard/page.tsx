@@ -62,7 +62,7 @@ export default function DashboardHomePage() {
         {/* Left Column */}
         <div className="space-y-6 lg:col-span-2">
           {/* Progress Plan */}
-          <Card className="hover:border-primary/50 transition-all">
+          <Card className="hover:border-cyan-400/50 transition-all">
             <CardHeader>
               <CardTitle>Your Progress</CardTitle>
               <CardDescription>
@@ -71,7 +71,7 @@ export default function DashboardHomePage() {
             </CardHeader>
             <CardContent>
               <Progress value={42} className="h-2" />
-              <Button asChild variant="link" className="px-0 mt-2">
+              <Button asChild variant="link" className="px-0 mt-2 text-cyan-400">
                 <Link href="/dashboard/progress">
                   Go to Progress Plan <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -95,7 +95,7 @@ export default function DashboardHomePage() {
                   {favoritedFiles.map((file) => (
                     <li key={file.name} className="flex items-center gap-3">
                       {file.type === 'folder' ? (
-                        <Folder className="h-5 w-5 text-primary" />
+                        <Folder className="h-5 w-5 text-cyan-400" />
                       ) : (
                         <FileText className="h-5 w-5 text-muted-foreground" />
                       )}
@@ -113,7 +113,7 @@ export default function DashboardHomePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BookOpen className="text-primary" /> Favorited Notes
+                <BookOpen className="text-cyan-400" /> Favorited Notes
               </CardTitle>
               <CardDescription>
                 Your most important notes, front and center.
@@ -154,7 +154,7 @@ export default function DashboardHomePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Trophy className="text-primary" /> Your Competitions
+                <Trophy className="text-cyan-400" /> Your Competitions
               </CardTitle>
               <CardDescription>
                 Events selected from the quiz.

@@ -8,7 +8,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
-      <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm">
+      <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border-border">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             <Logo />

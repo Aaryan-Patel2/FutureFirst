@@ -34,7 +34,7 @@ export function DashboardHeader() {
                     <span className="sr-only">Toggle navigation menu</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col">
+            <SheetContent side="left" className="flex flex-col bg-card">
                 <nav className="grid gap-2 text-lg font-medium">
                     <Link href="#" className="flex items-center gap-2 text-lg font-semibold mb-4">
                         <Logo />
@@ -44,7 +44,7 @@ export function DashboardHeader() {
                         <Link
                             key={href}
                             href={href}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${pathname.startsWith(href) ? 'bg-muted text-primary' : 'text-muted-foreground'}`}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-cyan-400 ${pathname.startsWith(href) ? 'bg-muted text-cyan-400' : 'text-muted-foreground'}`}
                         >
                             <Icon className="h-4 w-4" />
                             {label}

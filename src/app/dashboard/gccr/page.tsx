@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -55,7 +56,7 @@ export default function GccrPage() {
                    </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
-                      {file.type === 'folder' ? <Folder className="h-5 w-5 text-primary" /> : <FileText className="h-5 w-5 text-muted-foreground" />}
+                      {file.type === 'folder' ? <Folder className="h-5 w-5 text-cyan-400" /> : <FileText className="h-5 w-5 text-muted-foreground" />}
                       <span>{file.name}</span>
                     </div>
                   </TableCell>
