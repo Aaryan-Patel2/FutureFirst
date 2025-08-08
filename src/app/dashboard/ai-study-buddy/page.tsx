@@ -43,10 +43,10 @@ export default function AiStudyBuddyPage() {
   return (
     <div className="grid md:grid-cols-4 lg:grid-cols-5 gap-6 h-[calc(100vh-8rem)]">
         {/* Chat History Sidebar */}
-        <div className="md:col-span-1 lg:col-span-1 flex flex-col border rounded-lg">
+        <div className="md:col-span-1 lg:col-span-1 flex flex-col border rounded-lg bg-card">
             <div className="flex items-center justify-between p-2 border-b">
-                <h2 className="text-lg font-semibold">Conversations</h2>
-                <Button variant="ghost" size="icon" onClick={createNewConversation}>
+                <h2 className="text-lg font-semibold px-2">Conversations</h2>
+                <Button variant="ghost" size="icon" onClick={createNewConversation} className="nav-link-hover">
                     <Plus className="h-5 w-5" />
                 </Button>
             </div>
@@ -56,8 +56,8 @@ export default function AiStudyBuddyPage() {
                         key={convo.id}
                         onClick={() => setActiveConversationId(convo.id)}
                         className={cn(
-                            'w-full text-left p-3 border-b hover:bg-accent transition-colors group relative cursor-pointer',
-                            activeConversationId === convo.id && 'bg-accent'
+                            'w-full text-left p-3 border-b-0 border-transparent hover:bg-accent/50 transition-all duration-200 group relative cursor-pointer',
+                            activeConversationId === convo.id && 'border-l-4 border-primary bg-primary/10'
                         )}
                     >
                         <p className="font-medium truncate pr-8">{convo.title}</p>

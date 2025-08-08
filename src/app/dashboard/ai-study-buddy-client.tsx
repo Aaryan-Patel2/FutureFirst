@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, FormEvent, useEffect, ChangeEvent, KeyboardEvent } from 'react';
@@ -111,11 +112,10 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     const userMessage: Message = { role: 'user', content: input };
     addMessage(convoId, userMessage);
   
-    // If it's the first message, generate a title
     if (isFirstMessage) {
       generateChatTitle({ firstMessage: input })
         .then(result => updateConversationTitle(convoId, result.title))
-        .catch(err => console.error("Error generating title:", err)); // Fail silently
+        .catch(err => console.error("Error generating title:", err));
     }
   
     const currentInput = input;
@@ -123,14 +123,10 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     setTimeout(resizeTextarea, 0);
   
     try {
-      // Create the assistant's message placeholder
-      const assistantMessagePlaceholder: Message = { role: 'assistant', content: '' };
-      addMessage(convoId, assistantMessagePlaceholder);
+      addMessage(convoId, { role: 'assistant', content: '' });
       
-      const updatedConversation = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId);
-      const assistantMessageIndex = updatedConversation!.messages.length - 1;
-  
-      const conversationHistory = updatedConversation!.messages.map(m => `${m.role}: ${m.content}`).join('\n');
+      const updatedConversation = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId)!;
+      const conversationHistory = updatedConversation.messages.slice(0, -1).map(m => `${m.role}: ${m.content}`).join('\n');
       
       const aiInput: AIStudyBuddyInput = {
         fileDataUri: activeConversation.fileContext?.dataUri,
@@ -139,14 +135,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
       };
       
       const result = await aiStudyBuddy(aiInput);
-      addMessage(convoId, { role: 'assistant', content: result.response });
-
-    } catch (error) {
-      console.error('Error with AI Study Buddy:', error);
-      const errorMessage: Message = { role: 'assistant', content: "Sorry, I encountered an error. Please try again." };
-      addMessage(convoId, errorMessage);
-    } finally {
-      // Remove the placeholder message
+      
       const convo = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId);
       if (convo) {
           const placeholderIndex = convo.messages.findIndex(m => m.role === 'assistant' && m.content === '');
@@ -154,6 +143,19 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
               useAiStudyBuddyStore.getState().deleteMessage(convoId, placeholderIndex);
           }
       }
+      addMessage(convoId, { role: 'assistant', content: result.response });
+
+    } catch (error) {
+      console.error('Error with AI Study Buddy:', error);
+      const convo = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId);
+      if (convo) {
+          const placeholderIndex = convo.messages.findIndex(m => m.role === 'assistant' && m.content === '');
+          if (placeholderIndex > -1) {
+              useAiStudyBuddyStore.getState().deleteMessage(convoId, placeholderIndex);
+          }
+      }
+      addMessage(convoId, { role: 'assistant', content: "Sorry, I encountered an error. Please try again." });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -168,9 +170,9 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
 
   if (!activeConversation) {
     return (
-        <div className="flex h-full flex-col items-center justify-center rounded-lg border bg-card p-4 text-center">
-            <Bot className="w-16 h-16 mb-4 text-muted-foreground" />
-            <h2 className="text-2xl font-semibold">Welcome to your AI Study Buddy!</h2>
+        <div className="flex h-full flex-col items-center justify-center rounded-lg border-2 border-dashed bg-card p-4 text-center">
+            <Bot className="w-16 h-16 mb-4 text-primary" />
+            <h2 className="text-2xl font-semibold">Welcome to your <span className="gradient-text">AI Study Buddy</span>!</h2>
             <p className="text-muted-foreground">Select a conversation or start a new one to begin.</p>
         </div>
     );
@@ -178,20 +180,20 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
-        <div className="lg:col-span-3 flex flex-col rounded-lg border bg-card p-4 h-full">
+        <div className="lg:col-span-3 flex flex-col rounded-lg border bg-card/80 backdrop-blur-sm p-4 h-full">
             <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
                 <div className="space-y-6">
                 {activeConversation.messages.map((message, index) => (
                     <div key={index} className={cn('flex items-start gap-4', message.role === 'user' ? 'justify-end' : 'justify-start')}>
                     {message.role === 'assistant' && (
-                        <Avatar className="h-8 w-8 bg-primary/20 text-primary flex items-center justify-center shrink-0">
+                        <Avatar className="h-8 w-8 bg-primary/20 text-primary flex items-center justify-center shrink-0 border-2 border-primary/30">
                             <Bot size={20} />
                         </Avatar>
                     )}
-                    <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2', message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                        {message.role === 'assistant' && !message.content && isLoading && index === activeConversation.messages.length -1 ? (
+                    <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-3 shadow-md', message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-card')}>
+                        {isLoading && message.role === 'assistant' && !message.content && index === activeConversation.messages.length - 1 ? (
                              <div className='flex items-center justify-center p-2'>
-                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
                             </div>
                         ) : (
                             <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
@@ -201,7 +203,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                     </div>
                     {message.role === 'user' && (
                         <Avatar className="h-8 w-8 shrink-0">
-                            <AvatarFallback><User size={20} /></AvatarFallback>
+                            <AvatarFallback className="bg-muted text-muted-foreground"><User size={20} /></AvatarFallback>
                         </Avatar>
                     )}
                     </div>
@@ -265,10 +267,10 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                     onKeyDown={handleKeyDown}
                     placeholder="Ask a question... (Shift + Enter for new line)"
                     disabled={isLoading}
-                    className="flex-1 resize-none pr-12"
+                    className="flex-1 resize-none pr-16"
                     rows={1}
                 />
-                <Button type="submit" disabled={isLoading || !input.trim()} className="absolute right-2 bottom-2" size="icon">
+                <Button type="submit" disabled={isLoading || !input.trim()} className="animated-button absolute right-2 bottom-2" size="icon">
                     {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
                 </form>
@@ -284,15 +286,15 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                     {activeConversation.fileContext ? (
                         <div className="flex items-center justify-between p-3 rounded-md bg-muted text-sm">
                             <div className="flex items-center gap-3 truncate">
-                                <Paperclip className="h-5 w-5 shrink-0" />
-                                <span className="truncate">{activeConversation.fileContext.name}</span>
+                                <Paperclip className="h-5 w-5 shrink-0 text-primary" />
+                                <span className="truncate font-medium">{activeConversation.fileContext.name}</span>
                             </div>
                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => clearFileContext(activeConversation!.id)}>
                                 <X className="h-4 w-4"/>
                              </Button>
                         </div>
                     ) : (
-                        <div className="text-center text-muted-foreground text-sm p-4">
+                        <div className="text-center text-muted-foreground text-sm p-4 border-2 border-dashed rounded-lg">
                             <p>No file context.</p>
                             <p>Upload a file or select one from the GCCR to ask specific questions about it.</p>
                         </div>
