@@ -29,7 +29,7 @@ const AIStudyBuddyOutputSchema = z.object({
 export type AIStudyBuddyOutput = z.infer<typeof AIStudyBuddyOutputSchema>;
 
 export async function aiStudyBuddy(input: AIStudyBuddyInput): Promise<ReadableStream<AIStudyBuddyOutput>> {
-  const {stream} = await aiStudyBuddyFlow(input);
+  const stream = await aiStudyBuddyFlow(input);
   return stream;
 }
 
