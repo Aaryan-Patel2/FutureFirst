@@ -1,19 +1,20 @@
 
 'use client';
 
-import { useState, useRef, FormEvent, useEffect, ChangeEvent, KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, ChangeEvent, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Upload, Send, User, Loader2, Paperclip, FolderGit2, X } from 'lucide-react';
+import { Upload, Send, User, Loader2, FolderGit2, X, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { aiStudyBuddy, AIStudyBuddyInput } from '@/ai/flows/ai-study-buddy';
 import { generateChatTitle } from '@/ai/flows/generate-chat-title';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { useAiStudyBuddyStore, Message, FileContext, Conversation } from '@/store/ai-study-buddy-store';
+import { useAiStudyBuddyStore, Message, FileContext } from '@/store/ai-study-buddy-store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useGccrStore, GccrFile } from '@/store/gccr-store';
+import { useNotesStore, Note } from '@/store/notes-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ReactMarkdown from 'react-markdown';
 import { SammyLogo } from '@/components/sammy-logo';
@@ -31,10 +32,12 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGccrDialogOpen, setIsGccrDialogOpen] = useState(false);
+  const [isNotebookDialogOpen, setIsNotebookDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { files: gccrFiles } = useGccrStore();
+  const { notes } = useNotesStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const resizeTextarea = () => {
@@ -70,7 +73,13 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     setIsGccrDialogOpen(false);
   }
 
-  const handleFileAsContext = async (file: File, source: 'upload' | 'gccr') => {
+  const handleNoteSelect = (note: Note) => {
+    const noteFile = new File([note.content], `${note.title}.md`, { type: 'text/markdown' });
+    handleFileAsContext(noteFile, 'notebook');
+    setIsNotebookDialogOpen(false);
+  };
+
+  const handleFileAsContext = async (file: File, source: 'upload' | 'gccr' | 'notebook') => {
     if (!activeConversation) return;
     try {
         const fileDataUri = await fileToDataUri(file);
@@ -81,7 +90,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
         };
         setFileContext(activeConversation.id, newFileContext);
         toast({
-            title: 'File Added as Context',
+            title: 'Context Added',
             description: `${file.name} will be used for this conversation.`,
         });
     } catch (error) {
@@ -210,7 +219,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
               ref={fileInputRef}
               onChange={handleManualFileSelect}
               className="hidden"
-              accept=".pdf,.doc,.docx,.txt,.md"
+              accept=".pdf,.doc,.docx,.txt,.md,image/*"
             />
              <Dialog open={isGccrDialogOpen} onOpenChange={setIsGccrDialogOpen}>
                 <DialogTrigger asChild>
@@ -235,6 +244,36 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                                 <TableRow key={file.name} onClick={() => handleGccrFileSelect(file)} className="cursor-pointer">
                                     <TableCell className="font-medium">{file.name}</TableCell>
                                     <TableCell className="hidden md:table-cell text-muted-foreground">{file.date}</TableCell>
+                                </TableRow>
+                            ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={isNotebookDialogOpen} onOpenChange={setIsNotebookDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button type="button" variant="ghost" size="icon" title="Select from Notebook" className="text-muted-foreground hover:text-cyan-400">
+                        <BookOpen className="h-5 w-5" />
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Select a Note for Context</DialogTitle>
+                    </DialogHeader>
+                    <div className="h-96 overflow-y-auto">
+                        <Table>
+                            <TableHeader>
+                            <TableRow>
+                                <TableHead>Title</TableHead>
+                                <TableHead className="hidden md:table-cell">Last Modified</TableHead>
+                            </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {notes.map((note) => (
+                                <TableRow key={note.id} onClick={() => handleNoteSelect(note)} className="cursor-pointer">
+                                    <TableCell className="font-medium">{note.title}</TableCell>
+                                    <TableCell className="hidden md:table-cell text-muted-foreground">{note.lastModified}</TableCell>
                                 </TableRow>
                             ))}
                             </TableBody>

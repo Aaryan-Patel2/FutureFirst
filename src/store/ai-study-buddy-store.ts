@@ -1,3 +1,4 @@
+
 'use client';
 
 import { create } from 'zustand';
@@ -11,7 +12,7 @@ export interface Message {
 
 export interface FileContext {
   name: string;
-  source: 'upload' | 'gccr';
+  source: 'upload' | 'gccr' | 'notebook';
   dataUri: string;
 }
 
