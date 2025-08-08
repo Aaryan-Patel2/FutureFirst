@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -208,11 +209,11 @@ export function QuizClient() {
                                     disabled={tags.length >= 5}
                                 />
                                 {tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-2 pt-2">
                                     {tags.map((tag) => (
-                                        <div key={tag} className="flex items-center gap-2 bg-cyan-500/20 text-cyan-300 rounded-full px-3 py-1 text-sm">
+                                        <div key={tag} className="flex items-center gap-2 bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm">
                                             <span>{tag}</span>
-                                            <button onClick={() => removeTag(tag)} className="text-cyan-300 hover:text-white">
+                                            <button onClick={() => removeTag(tag)} className="text-secondary-foreground/70 hover:text-secondary-foreground">
                                                 <X className="h-4 w-4" />
                                             </button>
                                         </div>
