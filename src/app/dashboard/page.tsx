@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useNotesStore } from '@/store/notes-store';
 import { useGccrStore } from '@/store/gccr-store';
+import { useQuizStore } from '@/store/quiz-store';
 
 // Mock Data - In a real app, this would come from state management or an API
 const user = {
@@ -34,18 +35,14 @@ const user = {
   avatar: 'https://placehold.co/100x100.png',
 };
 
-const selectedCompetitions = [
-  'Business Plan',
-  'Marketing',
-  'Public Speaking',
-];
-
 export default function DashboardHomePage() {
   const { notes } = useNotesStore();
   const favoritedNotes = notes.filter(note => note.isFavorite);
 
   const { files } = useGccrStore();
   const favoritedFiles = files.filter(file => file.isFavorite);
+
+  const { selectedCompetitions } = useQuizStore();
 
   return (
     <div className="space-y-6">

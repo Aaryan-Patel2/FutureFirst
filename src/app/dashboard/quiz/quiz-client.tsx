@@ -14,6 +14,7 @@ import { Loader2, Lightbulb, Star, Send, Share2, GripVertical, CheckCircle } fro
 import { Slider } from '@/components/ui/slider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ToastAction } from '@/components/ui/toast';
+import { useQuizStore } from '@/store/quiz-store';
 
 const quizQuestions = [
   { id: 'q1', type: 'mcq', text: 'Which of these subjects are you most interested in?', options: ['Business and Marketing', 'Finance and Accounting', 'Technology and Coding', 'Public Speaking'] },
@@ -30,6 +31,8 @@ export function QuizClient() {
   const [results, setResults] = useState<CompetitionQuizOutput | null>(null);
   const [rankedRecommendations, setRankedRecommendations] = useState<string[]>([]);
   const { toast } = useToast();
+  const { setCompetitions } = useQuizStore();
+
   const form = useForm({
     defaultValues: {
       recommendationCount: 5,
@@ -67,6 +70,7 @@ export function QuizClient() {
       });
       setResults(result);
       setRankedRecommendations(result.recommendations);
+      setCompetitions(result.recommendations); // Save to store
     } catch (error) {
       console.error('Quiz submission error:', error);
       toast({
