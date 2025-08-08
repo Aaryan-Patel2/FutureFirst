@@ -59,10 +59,11 @@ export function QuizClient() {
     setIsLoading(true);
     setResults(null);
     try {
+      const { recommendationCount, ...responses } = data;
       const result = await competitionQuiz({
-        responses: data,
+        responses,
         studentName: "Student",
-        recommendationCount: data.recommendationCount,
+        recommendationCount: recommendationCount,
       });
       setResults(result);
       setRankedRecommendations(result.recommendations);
