@@ -29,8 +29,8 @@ const AIStudyBuddyOutputSchema = z.object({
 export type AIStudyBuddyOutput = z.infer<typeof AIStudyBuddyOutputSchema>;
 
 export async function aiStudyBuddy(input: AIStudyBuddyInput): Promise<ReadableStream<AIStudyBuddyOutput>> {
-  const {stream} = aiStudyBuddyFlow(input);
-  return stream();
+  const {stream} = await aiStudyBuddyFlow(input);
+  return stream;
 }
 
 const studyBuddyPrompt = ai.definePrompt({
@@ -64,7 +64,7 @@ const aiStudyBuddyFlow = ai.defineFlow(
     stream: true,
   },
   async (input) => {
-    const {stream} = ai.generateStream({
+    const { stream } = ai.generateStream({
         prompt: studyBuddyPrompt,
         input,
     });
