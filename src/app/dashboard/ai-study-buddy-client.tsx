@@ -17,6 +17,7 @@ import { useGccrStore, GccrFile } from '@/store/gccr-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ReactMarkdown from 'react-markdown';
 import { SammyLogo } from '@/components/sammy-logo';
+import { Input } from '@/components/ui/input';
 
 export function AiStudyBuddyClient({ conversationId }: { conversationId: string | null }) {
   const { 
