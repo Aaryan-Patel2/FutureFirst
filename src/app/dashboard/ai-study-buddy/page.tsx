@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { SammyLogo } from '@/components/sammy-logo';
 
 export default function AiStudyBuddyPage() {
   const { conversations, activeConversationId, setActiveConversationId, createNewConversation, deleteConversation } = useAiStudyBuddyStore();
@@ -43,7 +44,7 @@ export default function AiStudyBuddyPage() {
   return (
     <div className="grid md:grid-cols-4 lg:grid-cols-5 gap-6 h-[calc(100vh-8rem)]">
         {/* Chat History Sidebar */}
-        <div className="md:col-span-1 lg:col-span-1 flex flex-col border rounded-lg bg-card">
+        <div className="md:col-span-1 lg:col-span-1 flex flex-col rounded-lg bg-card shadow-sm">
             <div className="flex items-center justify-between p-2 border-b">
                 <h2 className="text-lg font-semibold px-2">Conversations</h2>
                 <Button variant="ghost" size="icon" onClick={createNewConversation} className="nav-link-hover">
@@ -83,7 +84,7 @@ export default function AiStudyBuddyPage() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={(e) => handleDelete(e, convo.id)}>Delete</AlertDialogAction>
+                              <AlertDialogAction onClick={(e) => handleDelete(e, convo.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>

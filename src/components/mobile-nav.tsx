@@ -1,13 +1,15 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Bot, FolderGit2, Book, CalendarCheck, ClipboardList, Home } from 'lucide-react';
+import { SammyLogo } from './sammy-logo';
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: Home },
-  { href: '/dashboard/ai-study-buddy', label: 'Study AI', icon: Bot },
+  { href: '/dashboard/ai-study-buddy', label: 'Sammy AI', icon: SammyLogo },
   { href: '/dashboard/gccr', label: 'GCCR', icon: FolderGit2 },
   { href: '/dashboard/notebook', label: 'Notes', icon: Book },
   { href: '/dashboard/progress', label: 'Plan', icon: CalendarCheck },
@@ -25,7 +27,7 @@ export function MobileNav() {
           href={item.href}
           className={cn(
             'flex flex-col items-center gap-1 rounded-md p-2 text-sm font-medium transition-colors',
-            pathname === item.href
+            pathname.startsWith(item.href)
               ? 'text-primary'
               : 'text-muted-foreground hover:text-primary'
           )}

@@ -7,10 +7,11 @@ import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Bot, FolderGit2, Book, CalendarCheck, ClipboardList, Link as LinkIcon, Home } from 'lucide-react';
+import { SammyLogo } from './sammy-logo';
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: Home },
-  { href: '/dashboard/ai-study-buddy', label: 'AI Study Buddy', icon: Bot },
+  { href: '/dashboard/ai-study-buddy', label: 'Sammy AI', icon: SammyLogo },
   { href: '/dashboard/gccr', label: 'GCCR', icon: FolderGit2 },
   { href: '/dashboard/notebook', label: 'Digital Notebook', icon: Book },
   { href: '/dashboard/progress', label: 'Progress Plan', icon: CalendarCheck },
@@ -22,7 +23,7 @@ export function DesktopSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-card md:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-background md:flex">
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <Logo />
@@ -32,18 +33,19 @@ export function DesktopSidebar() {
       <nav className="flex-1 space-y-2 p-4">
         {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href) && item.href !== '/dashboard' || pathname === item.href;
+            const Icon = item.icon;
             return (
               <Button
                 key={item.href}
                 asChild
                 variant={'ghost'}
                 className={cn(
-                    "w-full justify-start text-muted-foreground nav-link-hover",
-                    isActive && "bg-primary/10 text-primary font-semibold"
+                    "w-full justify-start text-foreground",
+                    isActive ? "bg-muted font-semibold text-primary" : "text-muted-foreground"
                 )}
               >
-                <Link href={item.href}>
-                  <item.icon className="mr-2 h-4 w-4" />
+                <Link href={item.href} className="nav-link-hover flex items-center gap-3">
+                  <Icon className="h-5 w-5" />
                   {item.label}
                 </Link>
               </Button>

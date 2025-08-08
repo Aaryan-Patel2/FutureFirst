@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -7,10 +8,11 @@ import { Button } from './ui/button';
 import { Menu, Bot, FolderGit2, Book, CalendarCheck, ClipboardList, Link as LinkIcon, Home } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from './logo';
+import { SammyLogo } from './sammy-logo';
 
 const navItems = [
     { href: '/dashboard', label: 'Home', icon: Home },
-    { href: '/dashboard/ai-study-buddy', label: 'AI Study Buddy', icon: Bot },
+    { href: '/dashboard/ai-study-buddy', label: 'Sammy AI', icon: SammyLogo },
     { href: '/dashboard/gccr', label: 'GCCR', icon: FolderGit2 },
     { href: '/dashboard/notebook', label: 'Digital Notebook', icon: Book },
     { href: '/dashboard/progress', label: 'Progress Plan', icon: CalendarCheck },

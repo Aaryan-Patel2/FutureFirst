@@ -5,11 +5,11 @@ import { useState, useRef, FormEvent, useEffect, ChangeEvent, KeyboardEvent } fr
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Upload, Send, Bot, User, Loader2, Paperclip, FolderGit2, X } from 'lucide-react';
+import { Upload, Send, User, Loader2, Paperclip, FolderGit2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { aiStudyBuddy, AIStudyBuddyInput } from '@/ai/flows/ai-study-buddy';
 import { generateChatTitle } from '@/ai/flows/generate-chat-title';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useAiStudyBuddyStore, Message, FileContext, Conversation } from '@/store/ai-study-buddy-store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import { useGccrStore, GccrFile } from '@/store/gccr-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ReactMarkdown from 'react-markdown';
 import { Input } from '@/components/ui/input';
+import { SammyLogo } from '@/components/sammy-logo';
 
 export function AiStudyBuddyClient({ conversationId }: { conversationId: string | null }) {
   const { 
@@ -154,8 +155,8 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
   if (!activeConversation) {
     return (
         <div className="flex h-full flex-col items-center justify-center rounded-lg border-2 border-dashed bg-card p-4 text-center">
-            <Bot className="w-16 h-16 mb-4 text-primary" />
-            <h2 className="text-2xl font-semibold">Welcome to your <span className="gradient-text">AI Study Buddy</span>!</h2>
+            <SammyLogo className="w-24 h-24 mb-4 text-primary" />
+            <h2 className="text-2xl font-semibold">Welcome to <span className="gradient-text">Sammy AI</span>!</h2>
             <p className="text-muted-foreground">Select a conversation or start a new one to begin.</p>
         </div>
     );
@@ -163,18 +164,18 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
-        <div className="lg:col-span-3 flex flex-col rounded-lg border bg-card/80 backdrop-blur-sm p-4 h-full">
+        <div className="lg:col-span-3 flex flex-col rounded-lg border bg-card/80 backdrop-blur-sm p-4 h-full shadow-sm">
             <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
                 <div className="space-y-6">
                 {activeConversation.messages.map((message, index) => (
                     <div key={index} className={cn('flex items-start gap-4', message.role === 'user' ? 'justify-end' : 'justify-start')}>
                     {message.role === 'assistant' && (
-                        <Avatar className="h-8 w-8 bg-primary/20 text-primary flex items-center justify-center shrink-0 border-2 border-primary/30">
-                            <Bot size={20} />
+                        <Avatar className="h-9 w-9 bg-muted text-primary flex items-center justify-center shrink-0 border">
+                           <SammyLogo className="h-6 w-6" />
                         </Avatar>
                     )}
-                    <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-3 shadow-md', message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-card')}>
-                        {isLoading && message.role === 'assistant' && !message.content && index === activeConversation.messages.length - 1 ? (
+                    <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-3 shadow-md', message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-background border')}>
+                        {isLoading && index === activeConversation.messages.length - 1 ? (
                              <div className='flex items-center justify-center p-2'>
                                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
                             </div>
@@ -185,7 +186,8 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                         )}
                     </div>
                     {message.role === 'user' && (
-                        <Avatar className="h-8 w-8 shrink-0">
+                        <Avatar className="h-9 w-9 shrink-0">
+                             <AvatarImage src="https://placehold.co/100x100.png" alt="@student" data-ai-hint="student avatar" />
                             <AvatarFallback className="bg-muted text-muted-foreground"><User size={20} /></AvatarFallback>
                         </Avatar>
                     )}
@@ -248,7 +250,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ask a question... (Shift + Enter for new line)"
+                    placeholder="Ask Sammy AI... (Shift + Enter for new line)"
                     disabled={isLoading}
                     className="flex-1 resize-none pr-16"
                     rows={1}
@@ -260,7 +262,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
             </div>
         </div>
         <div className="lg:col-span-1">
-            <Card className="h-full">
+            <Card className="h-full shadow-sm">
                 <CardHeader>
                     <CardTitle>Context</CardTitle>
                     <CardDescription>The file being used for this conversation.</CardDescription>
@@ -288,5 +290,3 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     </div>
   );
 }
-
-    
