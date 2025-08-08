@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -135,7 +136,7 @@ export default function NotebookPage() {
             <FileText className="h-16 w-16 mb-4" />
             <h2 className="text-2xl font-semibold">No note selected</h2>
             <p>Select a note from the list or create a new one.</p>
-            <Button className="mt-4" onClick={handleNewNote}>
+            <Button className="mt-4 animated-button" onClick={handleNewNote}>
               <PlusCircle className="h-4 w-4 mr-2" />
               Create Note
             </Button>

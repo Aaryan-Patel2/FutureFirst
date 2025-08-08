@@ -50,7 +50,7 @@ export default function DashboardHomePage() {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-            Welcome back, {user.name.split(' ')[0]}!
+            Welcome back, <span className="gradient-text">{user.name.split(' ')[0]}!</span>
           </h1>
           <p className="text-muted-foreground">
             Here's a snapshot of your FBLA journey.

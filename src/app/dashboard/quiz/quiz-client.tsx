@@ -188,7 +188,7 @@ export function QuizClient() {
             <div className="flex gap-2">
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="secondary" className='animated-button'><Tags className="mr-2 h-4 w-4" /> Refine with Tags</Button>
+                        <Button variant="secondary"><Tags className="mr-2 h-4 w-4" /> Refine with Tags</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
@@ -351,9 +351,9 @@ export function QuizClient() {
             {tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-2">
                 {tags.map((tag) => (
-                    <div key={tag} className="flex items-center gap-2 bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium">
+                    <div key={tag} className="flex items-center gap-2 bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm font-medium">
                         <span>{tag}</span>
-                        <button onClick={() => removeTag(tag)} className="text-primary/70 hover:text-primary">
+                        <button onClick={() => removeTag(tag)} className="text-secondary-foreground/70 hover:text-secondary-foreground">
                             <X className="h-4 w-4" />
                         </button>
                     </div>
