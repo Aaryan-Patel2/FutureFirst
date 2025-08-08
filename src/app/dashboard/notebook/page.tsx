@@ -13,6 +13,7 @@ import { useNotesStore, Note } from '@/store/notes-store';
 import { digitizeNote } from '@/ai/flows/digitize-note';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function NotebookPage() {
   const { notes, addNote, updateNote, deleteNote, toggleFavorite, setFileForDigitization, clearFileForDigitization } = useNotesStore();
@@ -211,8 +212,8 @@ export default function NotebookPage() {
                 />
               ) : (
                 <ScrollArea className="h-full">
-                    <article className="prose prose-invert max-w-none p-6 text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-p:text-foreground prose-li:text-foreground">
-                       <ReactMarkdown>{activeNote.content}</ReactMarkdown>
+                    <article className="prose prose-invert max-w-none p-6 text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-p:text-foreground prose-li:text-foreground prose-table:text-foreground prose-th:text-foreground prose-td:text-foreground">
+                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{activeNote.content}</ReactMarkdown>
                     </article>
                 </ScrollArea>
               )}
