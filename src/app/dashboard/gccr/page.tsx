@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,10 +11,18 @@ import { useGccrStore } from '@/store/gccr-store';
 export default function GccrPage() {
   const { files, toggleFavorite } = useGccrStore();
   const [isClient, setIsClient] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const filteredFiles = useMemo(() => {
+    if (!searchTerm) return files;
+    return files.filter(file => 
+      file.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [files, searchTerm]);
   
   if (!isClient) {
     return null; // or a loading skeleton
@@ -29,7 +37,12 @@ export default function GccrPage() {
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search repository..." className="w-full max-w-sm pl-9" />
+        <Input 
+          placeholder="Search repository..." 
+          className="w-full max-w-sm pl-9" 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       <Card>
@@ -47,7 +60,7 @@ export default function GccrPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {files.map((file) => (
+              {filteredFiles.map((file) => (
                 <TableRow key={file.name}>
                    <TableCell>
                       <button onClick={() => toggleFavorite(file.name)} className="p-1">

@@ -16,7 +16,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import {
   FileText,
   Folder,
@@ -25,14 +24,19 @@ import {
   BookOpen,
   ArrowRight,
   Settings,
+  ChevronDown,
+  LineChart,
 } from 'lucide-react';
 import { useNotesStore } from '@/store/notes-store';
 import { useGccrStore } from '@/store/gccr-store';
 import { useQuizStore } from '@/store/quiz-store';
 import { useUserStore } from '@/store/user-store';
 import { useProgressStore } from '@/store/progress-store';
-import { useMemo } from 'react';
-import { isWithinInterval, startOfDay, addDays } from 'date-fns';
+import { useMemo, useState } from 'react';
+import { isWithinInterval, startOfDay, addDays, format } from 'date-fns';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 export default function DashboardHomePage() {
   const { user } = useUserStore();
@@ -43,19 +47,33 @@ export default function DashboardHomePage() {
   const favoritedFiles = files.filter(file => file.isFavorite);
 
   const { selectedCompetitions } = useQuizStore();
-
   const { tasks } = useProgressStore();
+  const [isChartOpen, setIsChartOpen] = useState(true);
 
-  const weeklyTasks = useMemo(() => {
+  const weeklyChartData = useMemo(() => {
     const today = startOfDay(new Date());
-    const next7Days = { start: today, end: addDays(today, 7) };
-    return tasks.filter(task => isWithinInterval(task.dueDate, next7Days));
+    const data = [];
+    for (let i = 0; i < 7; i++) {
+      const day = addDays(today, i);
+      const dayTasks = tasks.filter(task => isSameDay(task.dueDate, day));
+      data.push({
+        date: format(day, 'EEE'),
+        Done: dayTasks.filter(t => t.done).length,
+        Pending: dayTasks.filter(t => !t.done).length,
+      });
+    }
+    return data;
   }, [tasks]);
 
-  const completedWeeklyTasks = weeklyTasks.filter(t => t.done).length;
-  const totalWeeklyTasks = weeklyTasks.length;
-  const weeklyProgress = totalWeeklyTasks > 0 ? (completedWeeklyTasks / totalWeeklyTasks) * 100 : 0;
+  const chartConfig = {
+    Done: { label: 'Done', color: 'hsl(var(--accent))' },
+    Pending: { label: 'Pending', color: 'hsl(var(--secondary))' },
+  };
 
+  const isSameDay = (date1: Date, date2: Date) =>
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate();
 
   return (
     <div className="space-y-6">
@@ -75,22 +93,58 @@ export default function DashboardHomePage() {
         {/* Left Column */}
         <div className="space-y-6 lg:col-span-2">
           {/* Progress Plan */}
-          <Card className="hover:border-cyan-400/50 transition-all">
-            <CardHeader>
-              <CardTitle>Your Progress</CardTitle>
-              <CardDescription>
-                You've completed {completedWeeklyTasks} of {totalWeeklyTasks} tasks this week. Keep it up!
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Progress value={weeklyProgress} className="h-2" />
-              <Button asChild variant="link" className="px-0 mt-2 text-cyan-400">
-                <Link href="/dashboard/progress">
-                  Go to Progress Plan <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </CardContent>
+           <Card className="hover:border-cyan-400/50 transition-all">
+            <Collapsible open={isChartOpen} onOpenChange={setIsChartOpen}>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                  <div>
+                    <CardTitle>Your Weekly Progress</CardTitle>
+                    <CardDescription>
+                      A look at your tasks for the next 7 days.
+                    </CardDescription>
+                  </div>
+                  <Button variant="ghost" size="icon">
+                    <LineChart className="h-5 w-5 mr-2" />
+                    <ChevronDown className={`h-4 w-4 transition-transform ${isChartOpen ? 'rotate-180' : ''}`} />
+                  </Button>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent>
+                   <ChartContainer config={chartConfig} className="h-64">
+                    <BarChart accessibilityLayer data={weeklyChartData}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        tickMargin={10}
+                        axisLine={false}
+                        tickFormatter={(value) => value}
+                      />
+                       <YAxis 
+                          allowDecimals={false}
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={10}
+                        />
+                      <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent indicator="dot" />}
+                      />
+                      <Bar dataKey="Pending" fill="var(--color-Pending)" radius={4} />
+                      <Bar dataKey="Done" fill="var(--color-Done)" radius={4} />
+                    </BarChart>
+                  </ChartContainer>
+                  <Button asChild variant="link" className="px-0 mt-2 text-cyan-400">
+                    <Link href="/dashboard/progress">
+                      Go to Full Progress Plan <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
           </Card>
+
 
           {/* Favorited Repository Items */}
           <Card>
