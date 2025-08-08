@@ -1,29 +1,24 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Folder, FileText, Search, Star } from 'lucide-react';
-
-const initialFiles = [
-  { name: 'Business Plan 2023.pdf', type: 'file', date: '2023-10-26', isFavorite: true },
-  { name: 'Marketing Presentation Slides.pptx', type: 'file', date: '2023-10-25', isFavorite: false },
-  { name: 'Archived Projects', type: 'folder', date: '2023-10-24', isFavorite: false },
-  { name: 'Public Speaking Guide.docx', type: 'file', date: '2023-10-22', isFavorite: true },
-  { name: 'Event Study Cases', type: 'folder', date: '2023-10-20', isFavorite: true },
-  { name: '2022 National Winners', type: 'folder', date: '2023-09-15', isFavorite: false },
-  { name: 'Hospitality Management Test.pdf', type: 'file', date: '2023-09-10', isFavorite: false },
-];
+import { useGccrStore } from '@/store/gccr-store';
 
 export default function GccrPage() {
-  const [files, setFiles] = useState(initialFiles);
+  const { files, toggleFavorite } = useGccrStore();
+  const [isClient, setIsClient] = useState(false);
 
-  const toggleFavorite = (fileName: string) => {
-    setFiles(files.map(file => 
-      file.name === fileName ? { ...file, isFavorite: !file.isFavorite } : file
-    ));
-  };
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  if (!isClient) {
+    return null; // or a loading skeleton
+  }
 
   return (
     <div className="space-y-6">

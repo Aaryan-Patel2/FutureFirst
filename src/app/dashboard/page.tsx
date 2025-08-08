@@ -25,6 +25,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useNotesStore } from '@/store/notes-store';
+import { useGccrStore } from '@/store/gccr-store';
 
 // Mock Data - In a real app, this would come from state management or an API
 const user = {
@@ -32,12 +33,6 @@ const user = {
   grade: '11th Grade',
   avatar: 'https://placehold.co/100x100.png',
 };
-
-const favoritedFiles = [
-  { name: 'Business Plan 2023.pdf', type: 'file' },
-  { name: 'Public Speaking Guide.docx', type: 'file' },
-  { name: 'Event Study Cases', type: 'folder' },
-];
 
 const selectedCompetitions = [
   'Business Plan',
@@ -48,6 +43,9 @@ const selectedCompetitions = [
 export default function DashboardHomePage() {
   const { notes } = useNotesStore();
   const favoritedNotes = notes.filter(note => note.isFavorite);
+
+  const { files } = useGccrStore();
+  const favoritedFiles = files.filter(file => file.isFavorite);
 
   return (
     <div className="space-y-6">
@@ -95,18 +93,22 @@ export default function DashboardHomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-3">
-                {favoritedFiles.map((file) => (
-                  <li key={file.name} className="flex items-center gap-3">
-                    {file.type === 'folder' ? (
-                      <Folder className="h-5 w-5 text-primary" />
-                    ) : (
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                    )}
-                    <span className="font-medium">{file.name}</span>
-                  </li>
-                ))}
-              </ul>
+              {favoritedFiles.length > 0 ? (
+                 <ul className="space-y-3">
+                  {favoritedFiles.map((file) => (
+                    <li key={file.name} className="flex items-center gap-3">
+                      {file.type === 'folder' ? (
+                        <Folder className="h-5 w-5 text-primary" />
+                      ) : (
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                      )}
+                      <span className="font-medium">{file.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">You haven't favorited any files yet.</p>
+              )}
             </CardContent>
           </Card>
 
