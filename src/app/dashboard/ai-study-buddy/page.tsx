@@ -4,17 +4,33 @@
 import { AiStudyBuddyClient } from '../ai-study-buddy-client';
 import { useAiStudyBuddyStore } from '@/store/ai-study-buddy-store';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function AiStudyBuddyPage() {
-  const { conversations, activeConversationId, setActiveConversationId, createNewConversation } = useAiStudyBuddyStore();
+  const { conversations, activeConversationId, setActiveConversationId, createNewConversation, deleteConversation } = useAiStudyBuddyStore();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const handleDelete = (e: React.MouseEvent, convoId: string) => {
+    e.stopPropagation();
+    deleteConversation(convoId);
+  }
 
   if (!isClient) {
     return (
@@ -40,12 +56,38 @@ export default function AiStudyBuddyPage() {
                         key={convo.id}
                         onClick={() => setActiveConversationId(convo.id)}
                         className={cn(
-                            'w-full text-left p-3 border-b hover:bg-accent transition-colors',
+                            'w-full text-left p-3 border-b hover:bg-accent transition-colors group relative',
                             activeConversationId === convo.id && 'bg-accent'
                         )}
                     >
-                        <p className="font-medium truncate">{convo.title}</p>
-                        <p className="text-xs text-muted-foreground">{convo.messages.length} messages</p>
+                        <p className="font-medium truncate pr-8">{convo.title}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(convo.createdAt).toLocaleDateString()}</p>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                             <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this conversation.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={(e) => handleDelete(e, convo.id)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+
                     </button>
                 ))}
             </div>
@@ -53,7 +95,7 @@ export default function AiStudyBuddyPage() {
 
         {/* Main Chat Client */}
         <div className="md:col-span-3 lg:col-span-4">
-             <AiStudyBuddyClient key={activeConversationId} />
+             <AiStudyBuddyClient key={activeConversationId} conversationId={activeConversationId} />
         </div>
     </div>
   );

@@ -19,8 +19,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import ReactMarkdown from 'react-markdown';
 import { Input } from '@/components/ui/input';
 
-export function AiStudyBuddyClient() {
+export function AiStudyBuddyClient({ conversationId }: { conversationId: string | null }) {
   const { 
+    conversations,
     activeConversation, 
     addMessage, 
     updateConversationTitle,
@@ -72,6 +73,7 @@ export function AiStudyBuddyClient() {
   }
 
   const handleFileAsContext = async (file: File, source: 'upload' | 'gccr') => {
+    if (!activeConversation) return;
     try {
         const fileDataUri = await fileToDataUri(file);
         const newFileContext: FileContext = {
@@ -79,7 +81,7 @@ export function AiStudyBuddyClient() {
             dataUri: fileDataUri,
             source,
         };
-        setFileContext(activeConversation!.id, newFileContext);
+        setFileContext(activeConversation.id, newFileContext);
         toast({
             title: 'File Added as Context',
             description: `${file.name} will be used for this conversation.`,
@@ -107,11 +109,13 @@ export function AiStudyBuddyClient() {
   
     setIsLoading(true);
     const convoId = activeConversation.id;
+    const isFirstMessage = activeConversation.messages.length === 0;
+
     const userMessage: Message = { role: 'user', content: input };
     addMessage(convoId, userMessage);
   
     // If it's the first message, generate a title
-    if (activeConversation.messages.length === 1) {
+    if (isFirstMessage) {
       generateChatTitle({ firstMessage: input })
         .then(result => updateConversationTitle(convoId, result.title))
         .catch(err => console.error("Error generating title:", err)); // Fail silently
@@ -125,9 +129,11 @@ export function AiStudyBuddyClient() {
       // Create the assistant's message placeholder
       const assistantMessage: Message = { role: 'assistant', content: '' };
       addMessage(convoId, assistantMessage);
-      const assistantMessageIndex = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId)!.messages.length - 1;
+      
+      const updatedConversation = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId);
+      const assistantMessageIndex = updatedConversation!.messages.length - 1;
   
-      const conversationHistory = activeConversation.messages.map(m => `${m.role}: ${m.content}`).join('\n');
+      const conversationHistory = updatedConversation!.messages.map(m => `${m.role}: ${m.content}`).join('\n');
       
       const aiInput: AIStudyBuddyInput = {
         fileDataUri: activeConversation.fileContext?.dataUri,
@@ -155,7 +161,7 @@ export function AiStudyBuddyClient() {
                         updateMessageContent(convoId, assistantMessageIndex, accumulatedContent);
                     }
                 } catch (e) {
-                    console.error("Failed to parse stream chunk", e);
+                    // Incomplete JSON chunk, ignore for now
                 }
             });
         }
@@ -224,52 +230,55 @@ export function AiStudyBuddyClient() {
                 </div>
             </ScrollArea>
             <div className="mt-4 border-t pt-4">
-                <form onSubmit={(e) => { e.preventDefault(); handleFormSubmit(); }} className="flex items-center gap-2">
-                <Input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleManualFileSelect}
-                    className="hidden"
-                    accept=".pdf,.doc,.docx,.txt,.md"
-                />
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    title={'Upload File'}
-                >
-                    <Upload className="h-4 w-4" />
-                </Button>
-                 <Dialog open={isGccrDialogOpen} onOpenChange={setIsGccrDialogOpen}>
-                    <DialogTrigger asChild>
-                         <Button type="button" variant="outline" title="Select from GCCR">
-                            <FolderGit2 className="h-4 w-4" />
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>Select a File from GCCR</DialogTitle>
-                        </DialogHeader>
-                        <div className="h-96 overflow-y-auto">
-                             <Table>
-                                <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead className="hidden md:table-cell">Date Modified</TableHead>
-                                </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                {gccrFiles.filter(f => f.type === 'file').map((file) => (
-                                    <TableRow key={file.name} onClick={() => handleGccrFileSelect(file)} className="cursor-pointer">
-                                        <TableCell className="font-medium">{file.name}</TableCell>
-                                        <TableCell className="hidden md:table-cell text-muted-foreground">{file.date}</TableCell>
+                <form onSubmit={(e) => { e.preventDefault(); handleFormSubmit(); }} className="relative flex items-end gap-2">
+                <div className="absolute left-0 bottom-full mb-2 flex gap-2">
+                    <Input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleManualFileSelect}
+                        className="hidden"
+                        accept=".pdf,.doc,.docx,.txt,.md"
+                    />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        title={'Upload File'}
+                    >
+                        <Upload className="h-4 w-4" />
+                    </Button>
+                    <Dialog open={isGccrDialogOpen} onOpenChange={setIsGccrDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button type="button" variant="outline" size="sm" title="Select from GCCR">
+                                <FolderGit2 className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle>Select a File from GCCR</DialogTitle>
+                            </DialogHeader>
+                            <div className="h-96 overflow-y-auto">
+                                <Table>
+                                    <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead className="hidden md:table-cell">Date Modified</TableHead>
                                     </TableRow>
-                                ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </DialogContent>
-                </Dialog>
+                                    </TableHeader>
+                                    <TableBody>
+                                    {gccrFiles.filter(f => f.type === 'file').map((file) => (
+                                        <TableRow key={file.name} onClick={() => handleGccrFileSelect(file)} className="cursor-pointer">
+                                            <TableCell className="font-medium">{file.name}</TableCell>
+                                            <TableCell className="hidden md:table-cell text-muted-foreground">{file.date}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
                 <Textarea
                     ref={textareaRef}
                     value={input}
@@ -277,10 +286,10 @@ export function AiStudyBuddyClient() {
                     onKeyDown={handleKeyDown}
                     placeholder="Ask a question... (Shift + Enter for new line)"
                     disabled={isLoading}
-                    className="flex-1 resize-none"
+                    className="flex-1 resize-none pr-12"
                     rows={1}
                 />
-                <Button type="submit" disabled={isLoading || !input.trim()}>
+                <Button type="submit" disabled={isLoading || !input.trim()} className="absolute right-2 bottom-2" size="icon">
                     {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
                 </form>

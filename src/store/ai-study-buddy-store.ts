@@ -28,6 +28,7 @@ interface AiStudyBuddyState {
   conversations: Conversation[];
   activeConversationId: string | null;
   createNewConversation: () => void;
+  deleteConversation: (conversationId: string) => void;
   setActiveConversationId: (id: string) => void;
   addMessage: (conversationId: string, message: Message) => void;
   updateConversationTitle: (conversationId: string, title: string) => void;
@@ -61,6 +62,18 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
             state.conversations.unshift(newConversation);
             state.activeConversationId = newConversation.id;
           })
+        );
+        get()._updateActiveConversation();
+      },
+
+      deleteConversation: (conversationId) => {
+        set(
+            produce((state: AiStudyBuddyState) => {
+                state.conversations = state.conversations.filter(c => c.id !== conversationId);
+                if (state.activeConversationId === conversationId) {
+                    state.activeConversationId = state.conversations.length > 0 ? state.conversations[0].id : null;
+                }
+            })
         );
         get()._updateActiveConversation();
       },
