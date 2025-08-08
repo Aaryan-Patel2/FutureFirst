@@ -1,9 +1,9 @@
 
 'use server';
 /**
- * @fileOverview A streaming AI study buddy flow.
+ * @fileOverview An AI study buddy flow.
  *
- * - aiStudyBuddy - A function that handles the AI study buddy conversation stream.
+ * - aiStudyBuddy - A function that handles the AI study buddy conversation.
  * - AIStudyBuddyInput - The input type for the aiStudyBuddy function.
  * - AIStudyBuddyOutput - The return type for the aiStudybuddy function.
  */
@@ -28,14 +28,14 @@ const AIStudyBuddyOutputSchema = z.object({
 });
 export type AIStudyBuddyOutput = z.infer<typeof AIStudyBuddyOutputSchema>;
 
-export async function aiStudyBuddy(input: AIStudyBuddyInput): Promise<ReadableStream<AIStudyBuddyOutput>> {
-  const stream = await aiStudyBuddyFlow(input);
-  return stream;
+export async function aiStudyBuddy(input: AIStudyBuddyInput): Promise<AIStudyBuddyOutput> {
+  return aiStudyBuddyFlow(input);
 }
 
 const studyBuddyPrompt = ai.definePrompt({
     name: 'studyBuddyPrompt',
     input: { schema: AIStudyBuddyInputSchema },
+    output: { schema: AIStudyBuddyOutputSchema },
     prompt: `You are an AI study buddy helping students prepare for FBLA competitions. Your tone should be helpful, encouraging, and knowledgeable about all things FBLA. Your responses must be formatted using Markdown.
 
     {{#if fileDataUri}}
@@ -61,21 +61,9 @@ const aiStudyBuddyFlow = ai.defineFlow(
     name: 'aiStudyBuddyFlow',
     inputSchema: AIStudyBuddyInputSchema,
     outputSchema: AIStudyBuddyOutputSchema,
-    stream: true,
   },
   async (input) => {
-    const { stream } = ai.generateStream({
-        prompt: studyBuddyPrompt,
-        input,
-    });
-
-    // Pipe the text stream through a transformer to format it as the output schema expects.
-    return stream.pipeThrough(
-        new TransformStream({
-            transform(chunk, controller) {
-                controller.enqueue({response: chunk.text});
-            },
-        })
-    );
+    const { output } = await studyBuddyPrompt(input);
+    return output!;
   }
 );

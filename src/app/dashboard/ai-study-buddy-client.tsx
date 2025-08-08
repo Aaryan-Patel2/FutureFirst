@@ -140,32 +140,10 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
         userQuery: currentInput,
         conversationHistory,
       };
-  
-      const stream = await aiStudyBuddy(aiInput);
-      const reader = stream.getReader();
-      const decoder = new TextDecoder();
-      let accumulatedContent = '';
-  
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        const jsonChunks = chunk.match(/\{.*\}/g);
-        
-        if (jsonChunks) {
-            jsonChunks.forEach(jsonString => {
-                try {
-                    const parsed = JSON.parse(jsonString);
-                    if (parsed.response) {
-                        accumulatedContent += parsed.response;
-                        updateMessageContent(convoId, assistantMessageIndex, accumulatedContent);
-                    }
-                } catch (e) {
-                    // Incomplete JSON chunk, ignore for now
-                }
-            });
-        }
-      }
+      
+      const result = await aiStudyBuddy(aiInput);
+      updateMessageContent(convoId, assistantMessageIndex, result.response);
+
     } catch (error) {
       console.error('Error with AI Study Buddy:', error);
       const errorMessage: Message = { role: 'assistant', content: "Sorry, I encountered an error. Please try again." };
@@ -206,9 +184,15 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                         </Avatar>
                     )}
                     <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2', message.role === 'user' ? 'bg-secondary text-secondary-foreground' : 'bg-muted')}>
-                        <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
-                            {message.content}
-                        </ReactMarkdown>
+                        {message.role === 'assistant' && !message.content && isLoading ? (
+                             <div className='flex items-center justify-center p-2'>
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            </div>
+                        ) : (
+                            <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
+                                {message.content}
+                            </ReactMarkdown>
+                        )}
                     </div>
                     {message.role === 'user' && (
                         <Avatar className="h-8 w-8 shrink-0">
@@ -217,16 +201,6 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                     )}
                     </div>
                 ))}
-                {isLoading && activeConversation.messages[activeConversation.messages.length - 1]?.role !== 'assistant' && (
-                    <div className="flex items-start gap-4 justify-start">
-                        <Avatar className="h-8 w-8 bg-primary/20 text-primary flex items-center justify-center">
-                            <Bot size={20} />
-                        </Avatar>
-                        <div className='max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2 bg-muted flex items-center'>
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                        </div>
-                    </div>
-                )}
                 </div>
             </ScrollArea>
             <div className="mt-4 border-t pt-4">
