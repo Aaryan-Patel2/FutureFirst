@@ -40,9 +40,9 @@ const prompt = ai.definePrompt({
   ${competitions.map(c => `- ${c.Event} (${c.Category}, Grades: ${c.Grades})`).join('\n')}
 
   **Quiz Responses:**
-  {{#each (eachProperty responses)}}
-  **Question ID:** {{{this.key}}}
-  **Response:** {{{this.value}}}
+  {{#each responses}}
+  **Question ID:** {{@key}}
+  **Response:** {{{this}}}
   {{/each}}
 
   **Your Task:**
