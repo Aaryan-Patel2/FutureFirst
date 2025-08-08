@@ -180,7 +180,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
                             </div>
                         ) : (
-                            <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none text-card-foreground">
                                 {message.content}
                             </ReactMarkdown>
                         )}
