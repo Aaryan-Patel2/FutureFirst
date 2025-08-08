@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUpRight, BookOpen, Slack, Trophy } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Slack, Trophy, Bell } from 'lucide-react';
 import Link from 'next/link';
 
 const resources = [
@@ -21,6 +21,12 @@ const resources = [
     description: 'Connect with chapter members, ask questions, and stay updated.',
     href: 'https://join.slack.com/t/saugusfbla/shared_invite/zt-3aysrseae-2GRsO2MRCFaFE5_ZW0ghCw',
     icon: Slack,
+  },
+   {
+    title: 'Saugus FBLA Remind',
+    description: 'Our method of basic/standard school communication.',
+    href: 'https://www.remind.com/join/saugusfbl',
+    icon: Bell,
   },
   {
     title: 'California FBLA Website',
