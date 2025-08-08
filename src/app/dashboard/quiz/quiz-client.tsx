@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ToastAction } from '@/components/ui/toast';
 import { useQuizStore } from '@/store/quiz-store';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const quizQuestions = [
   { id: 'q1', type: 'mcq', text: 'Which of these subjects are you most interested in?', options: ['Business and Marketing', 'Finance and Accounting', 'Technology and Coding', 'Public Speaking'] },
@@ -40,6 +41,7 @@ export function QuizClient() {
   const [rankedRecommendations, setRankedRecommendations] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
+  const [refineCount, setRefineCount] = useState(5);
   const { toast } = useToast();
   const { setCompetitions } = useQuizStore();
 
@@ -79,6 +81,7 @@ export function QuizClient() {
       setResults(result);
       setRankedRecommendations(result.recommendations);
       setCompetitions(result.recommendations); // Save to store
+      setRefineCount(recommendationCount); // Set refine count for dialog
     } catch (error) {
       console.error('Quiz submission error:', error);
       toast({
@@ -108,7 +111,7 @@ export function QuizClient() {
   const handleRefineSubmit = () => {
       const currentData = form.getValues();
       const finalTags = tags.join(' ');
-      onSubmit(currentData, finalTags);
+      onSubmit({ ...currentData, recommendationCount: refineCount }, finalTags);
   };
 
   const handleSendEmail = async () => {
@@ -190,29 +193,43 @@ export function QuizClient() {
                         <AlertDialogHeader>
                             <AlertDialogTitle>Refine Recommendations</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Add up to 5 tags to help us narrow down the best competitions for you. Press space to add a tag. Use dashes for multi-word tags (e.g., `public-speaking`).
+                                Adjust the tags and recommendation count to get a new list of events. For tags, press space to add and use dashes for multi-word tags (e.g., `+'"'+`public-speaking`+'"'+`).
                             </AlertDialogDescription>
                         </AlertDialogHeader>
-                        <div className="space-y-4">
-                            <Input 
-                                placeholder="Type a tag and press space..."
-                                value={tagInput}
-                                onChange={(e) => setTagInput(e.target.value)}
-                                onKeyDown={handleTagKeyDown}
-                                disabled={tags.length >= 5}
-                            />
-                             {tags.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                {tags.map((tag) => (
-                                    <div key={tag} className="flex items-center gap-2 bg-cyan-500/20 text-cyan-300 rounded-full px-3 py-1 text-sm">
-                                        <span>{tag}</span>
-                                        <button onClick={() => removeTag(tag)} className="text-cyan-300 hover:text-white">
-                                            <X className="h-4 w-4" />
-                                        </button>
+                        <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="refine-tags">Tags</Label>
+                                <Input 
+                                    id="refine-tags"
+                                    placeholder="Type a tag and press space..."
+                                    value={tagInput}
+                                    onChange={(e) => setTagInput(e.target.value)}
+                                    onKeyDown={handleTagKeyDown}
+                                    disabled={tags.length >= 5}
+                                />
+                                {tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                    {tags.map((tag) => (
+                                        <div key={tag} className="flex items-center gap-2 bg-cyan-500/20 text-cyan-300 rounded-full px-3 py-1 text-sm">
+                                            <span>{tag}</span>
+                                            <button onClick={() => removeTag(tag)} className="text-cyan-300 hover:text-white">
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    ))}
                                     </div>
-                                ))}
-                                </div>
-                            )}
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Number of Recommendations: <span className="text-primary font-bold">{refineCount}</span></Label>
+                                <Slider
+                                    value={[refineCount]}
+                                    onValueChange={(value) => setRefineCount(value[0])}
+                                    min={2}
+                                    max={5}
+                                    step={1}
+                                />
+                            </div>
                         </div>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
