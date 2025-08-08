@@ -32,29 +32,24 @@ export async function aiStudyBuddy(input: AIStudyBuddyInput): Promise<ReadableSt
   return aiStudyBuddyFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiStudyBuddyPrompt',
-  input: {schema: AIStudyBuddyInputSchema},
-  output: {schema: AIStudyBuddyOutputSchema},
-  prompt: `You are an AI study buddy helping students prepare for FBLA competitions. Your tone should be helpful, encouraging, and knowledgeable about all things FBLA. Your responses must be formatted using Markdown.
+const studyBuddyPrompt = `You are an AI study buddy helping students prepare for FBLA competitions. Your tone should be helpful, encouraging, and knowledgeable about all things FBLA. Your responses must be formatted using Markdown.
 
-  {{#if fileDataUri}}
-  The student has provided a file for context. Base your response primarily on this content.
-  File Content:
-  {{media url=fileDataUri}}
-  {{else}}
-  The student has not provided a file. You should act as a general FBLA assistant. You can answer questions about competitions, preparation strategies, leadership skills, or any other FBLA-related topic.
-  {{/if}}
+{{#if fileDataUri}}
+The student has provided a file for context. Base your response primarily on this content.
+File Content:
+{{media url=fileDataUri}}
+{{else}}
+The student has not provided a file. You should act as a general FBLA assistant. You can answer questions about competitions, preparation strategies, leadership skills, or any other FBLA-related topic.
+{{/if}}
 
-  Here is the student's query:
-  "{{{userQuery}}}"
+Here is the student's query:
+"{{{userQuery}}}"
 
-  Here is the conversation history (if any):
-  {{{conversationHistory}}}
+Here is the conversation history (if any):
+{{{conversationHistory}}}
 
-  Respond to the user's query based on the provided context (file or general knowledge) and the conversation history.
-  `,
-});
+Respond to the user's query based on the provided context (file or general knowledge) and the conversation history.
+`;
 
 const aiStudyBuddyFlow = ai.defineFlow(
   {
@@ -63,18 +58,20 @@ const aiStudyBuddyFlow = ai.defineFlow(
     outputSchema: AIStudyBuddyOutputSchema,
     stream: true,
   },
-  async input => {
-    const {stream} = prompt(input);
-    
-    const outputStream = new ReadableStream({
-        async pull(controller) {
-            for await (const chunk of stream) {
-                controller.enqueue(chunk.output);
-            }
-            controller.close();
-        }
+  async (input) => {
+    const {stream} = await ai.generate({
+      prompt: studyBuddyPrompt,
+      input,
+      stream: true,
     });
 
-    return outputStream;
+    // Pipe the text stream through a transformer to format it as the output schema expects.
+    return stream.pipeThrough(
+        new TransformStream<string, AIStudyBuddyOutput>({
+            transform(chunk, controller) {
+                controller.enqueue({response: chunk});
+            },
+        })
+    );
   }
 );
