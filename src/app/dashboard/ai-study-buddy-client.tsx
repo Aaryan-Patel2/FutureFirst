@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useGccrStore, GccrFile } from '@/store/gccr-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ReactMarkdown from 'react-markdown';
+import { Input } from '@/components/ui/input';
 
 export function AiStudyBuddyClient() {
   const { 
