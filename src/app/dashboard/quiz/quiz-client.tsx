@@ -1,20 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFormState } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { competitionQuiz, CompetitionQuizOutput } from '@/ai/flows/competition-quiz';
+import { competitionQuiz, CompetitionQuizInput, CompetitionQuizOutput } from '@/ai/flows/competition-quiz';
 import { sendQuizResultsEmail } from '@/ai/flows/send-quiz-results-email';
-import { Loader2, Lightbulb, Star, Send, Share2, GripVertical, CheckCircle } from 'lucide-react';
+import { Loader2, Lightbulb, Star, Send, Share2, GripVertical, CheckCircle, Tags, BrainCircuit } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ToastAction } from '@/components/ui/toast';
 import { useQuizStore } from '@/store/quiz-store';
+import { Input } from '@/components/ui/input';
 
 const quizQuestions = [
   { id: 'q1', type: 'mcq', text: 'Which of these subjects are you most interested in?', options: ['Business and Marketing', 'Finance and Accounting', 'Technology and Coding', 'Public Speaking'] },
@@ -25,23 +26,28 @@ const quizQuestions = [
   { id: 'q4', type: 'mcq', text: 'Which type of task do you enjoy more?', options: ['Objective tests', 'Creating a presentation', 'Building a product/app', 'Writing a report'] },
 ];
 
+type FormData = {
+    recommendationCount: number;
+    q1: string; frq1: string;
+    q2: string; q3: string;
+    frq2: string; q4: string;
+};
+
 export function QuizClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [results, setResults] = useState<CompetitionQuizOutput | null>(null);
   const [rankedRecommendations, setRankedRecommendations] = useState<string[]>([]);
+  const [tags, setTags] = useState('');
   const { toast } = useToast();
   const { setCompetitions } = useQuizStore();
 
-  const form = useForm({
+  const form = useForm<FormData>({
     defaultValues: {
       recommendationCount: 5,
-      q1: '',
-      frq1: '',
-      q2: '',
-      q3: '',
-      frq2: '',
-      q4: '',
+      q1: '', frq1: '',
+      q2: '', q3: '',
+      frq2: '', q4: '',
     },
   });
 
@@ -58,7 +64,7 @@ export function QuizClient() {
     setRankedRecommendations(newRanked);
   };
   
-  async function onSubmit(data: any) {
+  async function onSubmit(data: FormData, refinementTags?: string) {
     setIsLoading(true);
     setResults(null);
     try {
@@ -66,7 +72,8 @@ export function QuizClient() {
       const result = await competitionQuiz({
         responses,
         studentName: "Student",
-        recommendationCount: recommendationCount,
+        recommendationCount,
+        tags: refinementTags,
       });
       setResults(result);
       setRankedRecommendations(result.recommendations);
@@ -82,6 +89,11 @@ export function QuizClient() {
       setIsLoading(false);
     }
   }
+
+  const handleRefineSubmit = () => {
+      const currentData = form.getValues();
+      onSubmit(currentData, tags);
+  };
 
   const handleSendEmail = async () => {
     setIsSendingEmail(true);
@@ -151,31 +163,59 @@ export function QuizClient() {
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{results.feedback}</p>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex flex-wrap gap-2 justify-between">
           <Button onClick={() => setResults(null)} variant="outline">Take Quiz Again</Button>
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button><Share2 className="mr-2"/> Share with Ms. Herbert</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Confirm Your Ranked List</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        You are about to send the following ranked list of competitions to Ms. Herbert. Please review it before sending.
-                        <ol className="list-decimal list-inside my-4 space-y-1 rounded-md border p-4 bg-background">
-                            {rankedRecommendations.map(rec => <li key={rec}>{rec}</li>)}
-                        </ol>
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleSendEmail} disabled={isSendingEmail}>
-                         {isSendingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                        Confirm & Send
-                    </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <div className="flex gap-2">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="secondary"><Tags className="mr-2 h-4 w-4" /> Refine with Tags</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Refine Recommendations</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Add up to 5 tags to help us narrow down the best competitions for you. Separate tags with spaces. Use dashes for multi-word tags (e.g., `public-speaking`).
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <Input 
+                            placeholder="e.g. technology leadership presentation"
+                            value={tags}
+                            onChange={(e) => setTags(e.target.value)}
+                        />
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleRefineSubmit}>
+                                <BrainCircuit className="mr-2 h-4 w-4" />
+                                Re-run with Tags
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button><Share2 className="mr-2"/> Share with Ms. Herbert</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Your Ranked List</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You are about to send the following ranked list of competitions to Ms. Herbert. Please review it before sending.
+                            <ol className="list-decimal list-inside my-4 space-y-1 rounded-md border p-4 bg-background">
+                                {rankedRecommendations.map(rec => <li key={rec}>{rec}</li>)}
+                            </ol>
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSendEmail} disabled={isSendingEmail}>
+                            {isSendingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                            Confirm & Send
+                        </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
         </CardFooter>
       </Card>
     );
@@ -183,7 +223,7 @@ export function QuizClient() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(d => onSubmit(d))} className="space-y-8">
         <FormField
             control={form.control}
             name="recommendationCount"
