@@ -6,7 +6,7 @@ const resources = [
   {
     title: 'FBLA National Website',
     description: 'The official source for all national FBLA news, events, and information.',
-    href: '#',
+    href: 'https://www.fbla.org/',
     icon: Trophy,
     bgColor: 'bg-blue-500/10',
     textColor: 'text-blue-400'
@@ -14,7 +14,7 @@ const resources = [
   {
     title: 'FBLA Competitive Events Guide',
     description: 'Explore all competitive events, guidelines, and rating sheets.',
-    href: '#',
+    href: 'https://www.fbla.org/high-school/competitive-events/',
     icon: BookOpen,
     bgColor: 'bg-green-500/10',
     textColor: 'text-green-400'
@@ -22,7 +22,7 @@ const resources = [
   {
     title: 'Saugus FBLA Slack Channel',
     description: 'Connect with chapter members, ask questions, and stay updated.',
-    href: '#',
+    href: 'https://join.slack.com/t/saugusfbla/shared_invite/zt-3aysrseae-2GRsO2MRCFaFE5_ZW0ghCw',
     icon: Slack,
     bgColor: 'bg-purple-500/10',
     textColor: 'text-purple-400'
