@@ -43,8 +43,16 @@ export default function DashboardHomePage() {
   const { notes } = useNotesStore();
   const favoritedNotes = notes.filter(note => note.isFavorite);
 
-  const { files } = useGccrStore();
-  const favoritedFiles = files.filter(file => file.isFavorite);
+  const { items, mockupFiles, useRealData } = useGccrStore();
+  
+  // Get favorited files from appropriate source
+  const favoritedFiles = useMemo(() => {
+    if (useRealData) {
+      return (items || []).filter(item => item.isFavorite);
+    } else {
+      return (mockupFiles || []).filter(file => file.isFavorite);
+    }
+  }, [items, mockupFiles, useRealData]);
 
   const { selectedCompetitions } = useQuizStore();
   const { tasks } = useProgressStore();
@@ -159,16 +167,23 @@ export default function DashboardHomePage() {
             <CardContent>
               {favoritedFiles.length > 0 ? (
                  <ul className="space-y-3">
-                  {favoritedFiles.map((file) => (
-                    <li key={file.name} className="flex items-center gap-3">
-                      {file.type === 'folder' ? (
-                        <Folder className="h-5 w-5 text-cyan-400" />
-                      ) : (
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                      )}
-                      <span className="font-medium">{file.name}</span>
-                    </li>
-                  ))}
+                  {favoritedFiles.map((file) => {
+                    // Handle both real GCCR items and mockup files
+                    const fileName = file.name;
+                    const fileType = file.type;
+                    const fileKey = useRealData ? (file as any).id || file.name : file.name;
+                    
+                    return (
+                      <li key={fileKey} className="flex items-center gap-3">
+                        {fileType === 'folder' ? (
+                          <Folder className="h-5 w-5 text-cyan-400" />
+                        ) : (
+                          <FileText className="h-5 w-5 text-muted-foreground" />
+                        )}
+                        <span className="font-medium">{fileName}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <p className="text-sm text-muted-foreground">You haven't favorited any files yet.</p>
