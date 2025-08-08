@@ -13,7 +13,7 @@ export default function LoginPage() {
           <div className="mx-auto mb-4">
             <Logo />
           </div>
-          <CardTitle className="text-3xl font-bold">Welcome to <span className="gradient-text">FBLA Edge</span></CardTitle>
+          <CardTitle className="text-3xl font-bold">Welcome to <span className="gradient-text">FutureFirst</span></CardTitle>
           <CardDescription>Your competitive advantage starts here.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -31,7 +31,7 @@ export default function LoginPage() {
         </CardContent>
       </Card>
       <footer className="mt-8 text-center text-xs text-muted-foreground">
-        &copy; {new Date().getFullYear()} FBLA Edge. All rights reserved.
+        &copy; {new Date().getFullYear()} FutureFirst. All rights reserved.
       </footer>
     </div>
   );

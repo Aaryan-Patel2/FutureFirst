@@ -27,7 +27,7 @@ export function DesktopSidebar() {
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <Logo />
-          <span className="text-lg">FBLA Edge</span>
+          <span className="text-lg">FutureFirst</span>
         </Link>
       </div>
       <nav className="flex-1 space-y-2 p-4">
