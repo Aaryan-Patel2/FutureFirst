@@ -5,7 +5,7 @@
  *
  * - aiStudyBuddy - A function that handles the AI study buddy conversation stream.
  * - AIStudyBuddyInput - The input type for the aiStudyBuddy function.
- * - AIStudyBuddyOutput - The return type for the aiStudyBuddy function.
+ * - AIStudyBuddyOutput - The return type for the aiStudybuddy function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -29,27 +29,32 @@ const AIStudyBuddyOutputSchema = z.object({
 export type AIStudyBuddyOutput = z.infer<typeof AIStudyBuddyOutputSchema>;
 
 export async function aiStudyBuddy(input: AIStudyBuddyInput): Promise<ReadableStream<AIStudyBuddyOutput>> {
-  return aiStudyBuddyFlow(input);
+  const {stream} = aiStudyBuddyFlow(input);
+  return stream();
 }
 
-const studyBuddyPrompt = `You are an AI study buddy helping students prepare for FBLA competitions. Your tone should be helpful, encouraging, and knowledgeable about all things FBLA. Your responses must be formatted using Markdown.
+const studyBuddyPrompt = ai.definePrompt({
+    name: 'studyBuddyPrompt',
+    input: { schema: AIStudyBuddyInputSchema },
+    prompt: `You are an AI study buddy helping students prepare for FBLA competitions. Your tone should be helpful, encouraging, and knowledgeable about all things FBLA. Your responses must be formatted using Markdown.
 
-{{#if fileDataUri}}
-The student has provided a file for context. Base your response primarily on this content.
-File Content:
-{{media url=fileDataUri}}
-{{else}}
-The student has not provided a file. You should act as a general FBLA assistant. You can answer questions about competitions, preparation strategies, leadership skills, or any other FBLA-related topic.
-{{/if}}
+    {{#if fileDataUri}}
+    The student has provided a file for context. Base your response primarily on this content.
+    File Content:
+    {{media url=fileDataUri}}
+    {{else}}
+    The student has not provided a file. You should act as a general FBLA assistant. You can answer questions about competitions, preparation strategies, leadership skills, or any other FBLA-related topic.
+    {{/if}}
 
-Here is the student's query:
-"{{{userQuery}}}"
+    Here is the student's query:
+    "{{{userQuery}}}"
 
-Here is the conversation history (if any):
-{{{conversationHistory}}}
+    Here is the conversation history (if any):
+    {{{conversationHistory}}}
 
-Respond to the user's query based on the provided context (file or general knowledge) and the conversation history.
-`;
+    Respond to the user's query based on the provided context (file or general knowledge) and the conversation history.
+    `,
+});
 
 const aiStudyBuddyFlow = ai.defineFlow(
   {
@@ -59,17 +64,16 @@ const aiStudyBuddyFlow = ai.defineFlow(
     stream: true,
   },
   async (input) => {
-    const {stream} = await ai.generate({
-      prompt: studyBuddyPrompt,
-      input,
-      stream: true,
+    const {stream} = ai.generateStream({
+        prompt: studyBuddyPrompt,
+        input,
     });
 
     // Pipe the text stream through a transformer to format it as the output schema expects.
     return stream.pipeThrough(
-        new TransformStream<string, AIStudyBuddyOutput>({
+        new TransformStream({
             transform(chunk, controller) {
-                controller.enqueue({response: chunk});
+                controller.enqueue({response: chunk.text});
             },
         })
     );
