@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -5,14 +6,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { addDays, startOfDay, isWithinInterval, isSameDay } from 'date-fns';
+import { addDays, startOfDay, isWithinInterval, isSameDay, format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const today = startOfDay(new Date());
 
-const tasksData = [
+const initialTasks = [
   { id: 'task1', label: 'Complete Marketing Chapter 1', done: true, category: 'Marketing', dueDate: today },
   { id: 'task2', label: 'Practice Impromptu Speech (5 mins)', done: false, category: 'Public Speaking', dueDate: addDays(today, 2) },
   { id: 'task3', label: 'Review Business Law Case Studies', done: false, category: 'Business Law', dueDate: addDays(today, 5) },
@@ -24,12 +40,17 @@ const tasksData = [
 
 export default function ProgressPlanPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [tasks, setTasks] = useState(tasksData);
+  const [tasks, setTasks] = useState(initialTasks);
   const [activeTab, setActiveTab] = useState('all');
   
+  // State for the "Add Task" dialog
+  const [taskName, setTaskName] = useState('');
+  const [taskCategory, setTaskCategory] = useState('');
+  const [taskDueDate, setTaskDueDate] = useState<Date | undefined>();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
-    // If a date is selected, clear the active tab so the view defaults to the selected date
     if (date) {
       setActiveTab('');
     }
@@ -39,6 +60,28 @@ export default function ProgressPlanPage() {
     setTasks(tasks.map(task => task.id === taskId ? { ...task, done: !task.done } : task));
   };
   
+  const addTask = () => {
+    if (taskName && taskCategory && taskDueDate) {
+        const newTask = {
+            id: `task${Date.now()}`,
+            label: taskName,
+            category: taskCategory,
+            dueDate: startOfDay(taskDueDate),
+            done: false,
+        };
+        setTasks([...tasks, newTask]);
+        // Reset form and close dialog
+        setTaskName('');
+        setTaskCategory('');
+        setTaskDueDate(undefined);
+        setIsDialogOpen(false);
+    }
+  };
+
+  const deleteTask = (taskId: string) => {
+    setTasks(tasks.filter(task => task.id !== taskId));
+  };
+
   const filteredTasks = useMemo(() => {
     if (selectedDate) {
       return tasks.filter(task => isSameDay(task.dueDate, selectedDate));
@@ -106,7 +149,7 @@ export default function ProgressPlanPage() {
             <ScrollArea className="h-72">
                 <div className="space-y-4">
                 {filteredTasks.length > 0 ? filteredTasks.map((task) => (
-                    <div key={task.id} className="flex items-center space-x-4 p-2 rounded-md hover:bg-accent">
+                    <div key={task.id} className="flex items-center space-x-4 p-2 rounded-md hover:bg-accent group">
                     <Checkbox
                         id={task.id}
                         checked={task.done}
@@ -119,6 +162,9 @@ export default function ProgressPlanPage() {
                         {task.label}
                     </label>
                     <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">{task.category}</div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100" onClick={() => deleteTask(task.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                     </div>
                 )) : <p className="text-center text-muted-foreground py-10">No tasks in this period.</p>}
                 </div>
@@ -156,9 +202,68 @@ export default function ProgressPlanPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row justify-between items-center">
-            <CardTitle>Manage Tasks</CardTitle>
-            <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Add Task</Button>
+            <CardHeader className="flex flex-row justify-between items-center">
+                <CardTitle>Manage Tasks</CardTitle>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Add Task</Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                        <DialogTitle>Add a new task</DialogTitle>
+                        <DialogDescription>
+                            Fill in the details below to add a new task to your progress plan.
+                        </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="task-name" className="text-right">
+                            Task
+                            </Label>
+                            <Input id="task-name" value={taskName} onChange={(e) => setTaskName(e.target.value)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="task-category" className="text-right">
+                            Category
+                            </Label>
+                            <Input id="task-category" value={taskCategory} onChange={(e) => setTaskCategory(e.target.value)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="task-due-date" className="text-right">
+                            Due Date
+                            </Label>
+                             <Popover>
+                                <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                    "w-[240px] justify-start text-left font-normal",
+                                    !taskDueDate && "text-muted-foreground"
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {taskDueDate ? format(taskDueDate, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={taskDueDate}
+                                        onSelect={setTaskDueDate}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" variant="secondary">Cancel</Button>
+                            </DialogClose>
+                            <Button type="submit" onClick={addTask}>Add Task</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
           </CardHeader>
           <CardContent>
             <Button className="w-full">
