@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { UserNav } from '@/components/user-nav';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from './ui/button';
-import { Menu, Bot, FolderGit2, Book, CalendarCheck, ClipboardQuestion, Link as LinkIcon, Home } from 'lucide-react';
+import { Menu, Bot, FolderGit2, Book, CalendarCheck, ClipboardList, Link as LinkIcon, Home } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from './logo';
 
@@ -13,7 +13,7 @@ const navItems = [
     { href: '/dashboard/gccr', label: 'GCCR', icon: FolderGit2 },
     { href: '/dashboard/notebook', label: 'Digital Notebook', icon: Book },
     { href: '/dashboard/progress', label: 'Progress Plan', icon: CalendarCheck },
-    { href: '/dashboard/quiz', label: 'Competition Quiz', icon: ClipboardQuestion },
+    { href: '/dashboard/quiz', label: 'Competition Quiz', icon: ClipboardList },
     { href: '/dashboard/resources', label: 'Quick Resources', icon: LinkIcon },
 ];
 

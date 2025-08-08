@@ -1,6 +1,6 @@
 import { QuizClient } from './quiz-client';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ClipboardQuestion } from 'lucide-react';
+import { ClipboardList } from 'lucide-react';
 
 export default function CompetitionQuizPage() {
   return (
@@ -8,7 +8,7 @@ export default function CompetitionQuizPage() {
       <Card>
         <CardHeader className="text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-            <ClipboardQuestion className="h-8 w-8" />
+            <ClipboardList className="h-8 w-8" />
           </div>
           <CardTitle className="text-3xl font-bold">Competition Recommendation Quiz</CardTitle>
           <CardDescription>Answer a few questions to find the best FBLA competitions for you.</CardDescription>

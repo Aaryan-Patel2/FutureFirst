@@ -5,14 +5,14 @@ import { usePathname } from 'next/navigation';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
-import { Bot, FolderGit2, Book, CalendarCheck, ClipboardQuestion, Link as LinkIcon } from 'lucide-react';
+import { Bot, FolderGit2, Book, CalendarCheck, ClipboardList, Link as LinkIcon } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'AI Study Buddy', icon: Bot },
   { href: '/dashboard/gccr', label: 'GCCR', icon: FolderGit2 },
   { href: '/dashboard/notebook', label: 'Digital Notebook', icon: Book },
   { href: '/dashboard/progress', label: 'Progress Plan', icon: CalendarCheck },
-  { href: '/dashboard/quiz', label: 'Competition Quiz', icon: ClipboardQuestion },
+  { href: '/dashboard/quiz', label: 'Competition Quiz', icon: ClipboardList },
   { href: '/dashboard/resources', label: 'Quick Resources', icon: LinkIcon },
 ];
 

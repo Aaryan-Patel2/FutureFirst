@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Bot, FolderGit2, Book, CalendarCheck, ClipboardQuestion } from 'lucide-react';
+import { Bot, FolderGit2, Book, CalendarCheck, ClipboardList } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Study AI', icon: Bot },
   { href: '/dashboard/gccr', label: 'GCCR', icon: FolderGit2 },
   { href: '/dashboard/notebook', label: 'Notes', icon: Book },
   { href: '/dashboard/progress', label: 'Plan', icon: CalendarCheck },
-  { href: '/dashboard/quiz', label: 'Quiz', icon: ClipboardQuestion },
+  { href: '/dashboard/quiz', label: 'Quiz', icon: ClipboardList },
 ];
 
 export function MobileNav() {
