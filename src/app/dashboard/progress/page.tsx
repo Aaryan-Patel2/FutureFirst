@@ -62,6 +62,19 @@ export default function ProgressPlanPage() {
   const progressPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
   
   const daysWithTasks = useMemo(() => tasks.map(t => t.dueDate), [tasks]);
+  
+  const currentViewText = () => {
+    if (selectedDate) {
+      return selectedDate.toLocaleDateString();
+    }
+    if (activeTab === '7days') {
+      return 'next 7 days';
+    }
+    if (activeTab === '14days') {
+      return 'next 14 days';
+    }
+    return 'all';
+  }
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -69,7 +82,7 @@ export default function ProgressPlanPage() {
         <Card>
           <CardHeader>
             <CardTitle>My Progress Plan</CardTitle>
-            <CardDescription>Track your study tasks and stay on top of your goals. Currently viewing: <span className="text-primary font-semibold">{selectedDate ? selectedDate.toLocaleDateString() : activeTab}</span> tasks.</CardDescription>
+            <CardDescription>Track your study tasks and stay on top of your goals. Currently viewing: <span className="text-primary font-semibold">{currentViewText()}</span> tasks.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="w-full bg-muted rounded-full h-2.5">
