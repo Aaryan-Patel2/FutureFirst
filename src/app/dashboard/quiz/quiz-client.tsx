@@ -6,18 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { competitionQuiz, CompetitionQuizOutput } from '@/ai/flows/competition-quiz';
 import { Loader2, Lightbulb, Star, Send } from 'lucide-react';
 
 const quizQuestions = [
-  { id: 'q1', text: 'Which of these subjects are you most interested in?', options: ['Business and Marketing', 'Finance and Accounting', 'Technology and Coding', 'Public Speaking'] },
-  { id: 'q2', text: 'Do you prefer working alone or in a team?', options: ['Alone', 'In a team', 'Either is fine'] },
-  { id: 'q3', text: 'How comfortable are you with presenting in front of an audience?', options: ['Very comfortable', 'Somewhat comfortable', 'Not comfortable'] },
-  { id: 'q4', text: 'Which type of task do you enjoy more?', options: ['Objective tests', 'Creating a presentation', 'Building a product/app', 'Writing a report'] },
+  { id: 'q1', type: 'mcq', text: 'Which of these subjects are you most interested in?', options: ['Business and Marketing', 'Finance and Accounting', 'Technology and Coding', 'Public Speaking'] },
+  { id: 'frq1', type: 'frq', text: 'Describe a project or accomplishment you are proud of. What role did you play?' },
+  { id: 'q2', type: 'mcq', text: 'Do you prefer working alone or in a team?', options: ['Alone', 'In a team', 'Either is fine'] },
+  { id: 'q3', type: 'mcq', text: 'How comfortable are you with presenting in front of an audience?', options: ['Very comfortable', 'Somewhat comfortable', 'Not comfortable'] },
+  { id: 'frq2', type: 'frq', text: 'If you had to start a business, what problem would it solve and why?' },
+  { id: 'q4', type: 'mcq', text: 'Which type of task do you enjoy more?', options: ['Objective tests', 'Creating a presentation', 'Building a product/app', 'Writing a report'] },
 ];
-
-const availableCompetitions = ["Marketing", "Business Plan", "Public Speaking", "Coding & Programming", "Accounting I", "Introduction to Financial Math"];
 
 export function QuizClient() {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +32,6 @@ export function QuizClient() {
     try {
       const result = await competitionQuiz({
         responses: data,
-        availableCompetitions,
         studentName: "Student", // Replace with actual student name from auth
       });
       setResults(result);
@@ -63,7 +63,7 @@ export function QuizClient() {
           </div>
           <div>
             <h3 className="font-semibold mb-2">Advisor Feedback</h3>
-            <p className="text-sm text-muted-foreground">{results.feedback}</p>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{results.feedback}</p>
           </div>
         </CardContent>
         <CardFooter>
@@ -86,20 +86,28 @@ export function QuizClient() {
               <FormItem className="space-y-3 rounded-lg border p-4">
                 <FormLabel className="font-semibold text-base">{q.text}</FormLabel>
                 <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-col space-y-2"
-                  >
-                    {q.options.map((opt) => (
-                      <FormItem key={opt} className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value={opt} />
-                        </FormControl>
-                        <FormLabel className="font-normal">{opt}</FormLabel>
-                      </FormItem>
-                    ))}
-                  </RadioGroup>
+                  {q.type === 'mcq' ? (
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-2"
+                    >
+                      {q.options!.map((opt) => (
+                        <FormItem key={opt} className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value={opt} />
+                          </FormControl>
+                          <FormLabel className="font-normal">{opt}</FormLabel>
+                        </FormItem>
+                      ))}
+                    </RadioGroup>
+                  ) : (
+                    <Textarea
+                      placeholder="Answer in 2-3 sentences..."
+                      className="resize-none"
+                      {...field}
+                    />
+                  )}
                 </FormControl>
                 <FormMessage />
               </FormItem>
