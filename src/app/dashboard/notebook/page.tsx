@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,71 +8,68 @@ import { Input } from '@/components/ui/input';
 import { PlusCircle, Save, Trash2, FileText, Star } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  lastModified: string;
-  isFavorite: boolean;
-}
-
-const mockNotes: Note[] = [
-  { id: 1, title: 'Marketing Midterm Study Guide', content: '# Marketing Concepts\n\n- SWOT Analysis\n- 4 Ps of Marketing\n- Target Audience', lastModified: '2 hours ago', isFavorite: true },
-  { id: 2, title: 'Business Plan Ideas', content: '## Idea 1: Eco-friendly packaging\n\n* **Target Market:** Environmentally conscious consumers\n* **Value Prop:** Reduce plastic waste', lastModified: '1 day ago', isFavorite: true },
-  { id: 3, title: 'Public Speaking Tips', content: '- Practice in front of a mirror\n- Know your audience\n- Use gestures effectively', lastModified: '3 days ago', isFavorite: false },
-];
+import { useNotesStore, Note } from '@/store/notes-store';
 
 export default function NotebookPage() {
-  const [notes, setNotes] = useState<Note[]>(mockNotes);
-  const [activeNote, setActiveNote] = useState<Note | null>(notes[0] || null);
-  
+  const { notes, addNote, updateNote, deleteNote, toggleFavorite } = useNotesStore();
+  const [activeNoteId, setActiveNoteId] = useState<number | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    if (notes.length > 0 && !activeNoteId) {
+      setActiveNoteId(notes[0].id);
+    }
+  }, [notes, activeNoteId]);
+
+  const activeNote = notes.find(n => n.id === activeNoteId);
+
   const handleSelectNote = (note: Note) => {
-    setActiveNote(note);
+    setActiveNoteId(note.id);
   };
 
   const handleNewNote = () => {
-    const newNote: Note = {
-      id: Date.now(),
+    const newNote = addNote({
       title: 'Untitled Note',
       content: '',
-      lastModified: 'Just now',
-      isFavorite: false,
-    };
-    setNotes([newNote, ...notes]);
-    setActiveNote(newNote);
-  };
-  
-  const handleContentChange = (content: string) => {
-    if (activeNote) {
-      const updatedNote = { ...activeNote, content, lastModified: 'Just now' };
-      setActiveNote(updatedNote);
-      setNotes(notes.map(n => n.id === activeNote.id ? updatedNote : n));
-    }
-  };
-  
-  const handleTitleChange = (title: string) => {
-    if (activeNote) {
-      const updatedNote = { ...activeNote, title, lastModified: 'Just now' };
-      setActiveNote(updatedNote);
-      setNotes(notes.map(n => n.id === activeNote.id ? updatedNote : n));
-    }
-  };
-  
-  const handleDeleteNote = () => {
-      if (activeNote) {
-          setNotes(notes.filter(n => n.id !== activeNote.id));
-          setActiveNote(notes.length > 1 ? notes.filter(n => n.id !== activeNote.id)[0] : null);
-      }
+    });
+    setActiveNoteId(newNote.id);
   };
 
-  const toggleFavorite = () => {
+  const handleContentChange = (content: string) => {
     if (activeNote) {
-      const updatedNote = { ...activeNote, isFavorite: !activeNote.isFavorite };
-      setActiveNote(updatedNote);
-      setNotes(notes.map(n => n.id === activeNote.id ? updatedNote : n));
+      updateNote(activeNote.id, { content, lastModified: 'Just now' });
     }
   };
+
+  const handleTitleChange = (title: string) => {
+    if (activeNote) {
+      updateNote(activeNote.id, { title, lastModified: 'Just now' });
+    }
+  };
+
+  const handleDeleteNote = () => {
+    if (activeNote) {
+      const currentIndex = notes.findIndex(n => n.id === activeNote.id);
+      deleteNote(activeNote.id);
+      if (notes.length > 1) {
+        const newActiveNote = notes[currentIndex - 1] || notes[currentIndex + 1];
+        setActiveNoteId(newActiveNote ? newActiveNote.id : null);
+      } else {
+        setActiveNoteId(null);
+      }
+    }
+  };
+
+  const handleToggleFavorite = () => {
+    if (activeNote) {
+      toggleFavorite(activeNote.id);
+    }
+  };
+  
+  if (!isClient) {
+      return null; // or a loading skeleton
+  }
 
   return (
     <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6 h-[calc(100vh-10rem)]">
@@ -95,8 +92,8 @@ export default function NotebookPage() {
                 )}
               >
                 <div>
-                    <h3 className="font-semibold truncate">{note.title}</h3>
-                    <p className="text-sm text-muted-foreground truncate">{note.lastModified}</p>
+                  <h3 className="font-semibold truncate">{note.title}</h3>
+                  <p className="text-sm text-muted-foreground truncate">{note.lastModified}</p>
                 </div>
                 {note.isFavorite && <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />}
               </button>
@@ -109,14 +106,14 @@ export default function NotebookPage() {
         {activeNote ? (
           <Card className="h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
-               <Input
-                 value={activeNote.title}
-                 onChange={(e) => handleTitleChange(e.target.value)}
-                 className="text-lg font-bold border-0 shadow-none focus-visible:ring-0 p-0 h-auto"
-                 placeholder="Note Title"
-               />
+              <Input
+                value={activeNote.title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                className="text-lg font-bold border-0 shadow-none focus-visible:ring-0 p-0 h-auto"
+                placeholder="Note Title"
+              />
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={toggleFavorite}>
+                <Button variant="ghost" size="icon" onClick={handleToggleFavorite}>
                   <Star className={cn("h-5 w-5", activeNote.isFavorite ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                 </Button>
                 <Button variant="destructive" size="icon" onClick={handleDeleteNote}>

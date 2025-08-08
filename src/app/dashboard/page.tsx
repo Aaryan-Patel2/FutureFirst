@@ -1,3 +1,6 @@
+
+'use client';
+
 import Link from 'next/link';
 import {
   Avatar,
@@ -21,6 +24,7 @@ import {
   BookOpen,
   ArrowRight,
 } from 'lucide-react';
+import { useNotesStore } from '@/store/notes-store';
 
 // Mock Data - In a real app, this would come from state management or an API
 const user = {
@@ -35,11 +39,6 @@ const favoritedFiles = [
   { name: 'Event Study Cases', type: 'folder' },
 ];
 
-const favoritedNotes = [
-  { id: 1, title: 'Marketing Midterm Study Guide' },
-  { id: 2, title: 'Business Plan Ideas' },
-];
-
 const selectedCompetitions = [
   'Business Plan',
   'Marketing',
@@ -47,6 +46,9 @@ const selectedCompetitions = [
 ];
 
 export default function DashboardHomePage() {
+  const { notes } = useNotesStore();
+  const favoritedNotes = notes.filter(note => note.isFavorite);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -119,14 +121,18 @@ export default function DashboardHomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-3">
-                {favoritedNotes.map((note) => (
-                  <li key={note.id} className="flex items-center gap-3">
-                    <Star className="h-5 w-5 text-yellow-400" />
-                    <span className="font-medium">{note.title}</span>
-                  </li>
-                ))}
-              </ul>
+              {favoritedNotes.length > 0 ? (
+                <ul className="space-y-3">
+                  {favoritedNotes.map((note) => (
+                    <li key={note.id} className="flex items-center gap-3">
+                      <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                      <span className="font-medium">{note.title}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">You haven't favorited any notes yet.</p>
+              )}
             </CardContent>
           </Card>
         </div>
