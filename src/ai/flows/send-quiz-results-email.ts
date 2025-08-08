@@ -29,6 +29,7 @@ export async function sendQuizResultsEmail(input: SendQuizResultsEmailInput): Pr
 const emailPrompt = ai.definePrompt({
   name: 'emailComposerPrompt',
   input: { schema: SendQuizResultsEmailInputSchema },
+  output: {schema: z.object({response: z.string()})},
   prompt: `A student, {{{studentName}}}, has completed the FBLA Competition Quiz and has ranked their preferred events. 
   
   Your task is to compose a clean, professional, and well-formatted HTML email body to be sent to their teacher.

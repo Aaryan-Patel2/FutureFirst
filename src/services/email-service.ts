@@ -28,4 +28,8 @@ class MockEmailService {
   }
 }
 
-export const emailService = new MockEmailService();
+const emailServiceInstance = new MockEmailService();
+
+export const emailService = {
+    sendEmail: emailServiceInstance.sendEmail,
+};

@@ -13,6 +13,7 @@ import { sendQuizResultsEmail } from '@/ai/flows/send-quiz-results-email';
 import { Loader2, Lightbulb, Star, Send, Share2, GripVertical, CheckCircle } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ToastAction } from '@/components/ui/toast';
 
 const quizQuestions = [
   { id: 'q1', type: 'mcq', text: 'Which of these subjects are you most interested in?', options: ['Business and Marketing', 'Finance and Accounting', 'Technology and Coding', 'Public Speaking'] },
@@ -32,6 +33,12 @@ export function QuizClient() {
   const form = useForm({
     defaultValues: {
       recommendationCount: 5,
+      q1: '',
+      frq1: '',
+      q2: '',
+      q3: '',
+      frq2: '',
+      q4: '',
     },
   });
 
@@ -201,7 +208,7 @@ export function QuizClient() {
           <FormField
             key={q.id}
             control={form.control}
-            name={q.id}
+            name={q.id as any}
             rules={{ required: 'This field is required.' }}
             render={({ field }) => (
               <FormItem className="space-y-3 rounded-lg border p-4">
