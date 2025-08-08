@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,16 +13,16 @@
     --popover-foreground: 240 10% 3.9%;
     --primary: 240 33% 18%; /* Dark Navy */
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
+    --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
-    --muted: 0 0% 96.1%;
+    --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
     --accent: 195 100% 50%; /* Cyan */
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
     --ring: 240 33% 18%; /* Dark Navy */
     --radius: 0.5rem;
     --chart-1: 12 76% 61%;
@@ -40,17 +41,17 @@
     --popover-foreground: 0 0% 98%;
     --primary: 240 33% 18%; /* Dark Navy */
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 14.9%;
+    --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
     --accent: 195 100% 50%; /* Cyan */
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 240 33% 18%; /* Dark Navy */
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -65,5 +66,34 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    @apply bg-gradient-to-r from-cyan-500 to-purple-500 bg-clip-text text-transparent;
+  }
+  
+  .gradient-border {
+    @apply p-[2px] bg-gradient-to-br from-cyan-400 via-purple-500 to-blue-900;
+    box-shadow: 0 0 15px 0px rgba(0, 255, 255, 0.3), 0 0 10px 0px rgba(128, 0, 128, 0.2);
+    transition: all 0.3s ease-in-out;
+  }
+  .gradient-border:hover {
+    box-shadow: 0 0 30px 0px rgba(0, 255, 255, 0.5), 0 0 20px 0px rgba(128, 0, 128, 0.4);
+  }
+
+  .animated-button {
+    @apply bg-gradient-to-r from-primary via-blue-900 to-purple-600 text-primary-foreground;
+    @apply transition-all duration-300 ease-in-out;
+    background-size: 200% 100%;
+  }
+  .animated-button:hover {
+    background-position: 100% 0;
+    transform: scale(1.05);
+  }
+
+  .nav-link-hover {
+    @apply transition-all duration-200 ease-in-out hover:scale-105 hover:text-primary hover:font-semibold;
   }
 }

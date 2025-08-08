@@ -86,10 +86,16 @@ export default {
             height: '0',
           },
         },
+        'gradient-glow': {
+          '0%': { 'box-shadow': '0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 15px #8a2be2, 0 0 20px #8a2be2' },
+          '50%': { 'box-shadow': '0 0 10px #00ffff, 0 0 15px #00ffff, 0 0 20px #8a2be2, 0 0 25px #8a2be2' },
+          '100%': { 'box-shadow': '0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 15px #8a2be2, 0 0 20px #8a2be2' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'gradient-glow': 'gradient-glow 3s ease-in-out infinite',
       },
     },
   },

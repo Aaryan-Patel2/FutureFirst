@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -29,19 +30,25 @@ export function DesktopSidebar() {
         </Link>
       </div>
       <nav className="flex-1 space-y-2 p-4">
-        {navItems.map((item) => (
-          <Button
-            key={item.href}
-            asChild
-            variant={pathname.startsWith(item.href) && item.href !== '/dashboard' || pathname === item.href ? 'secondary' : 'ghost'}
-            className="w-full justify-start"
-          >
-            <Link href={item.href}>
-              <item.icon className="mr-2 h-4 w-4" />
-              {item.label}
-            </Link>
-          </Button>
-        ))}
+        {navItems.map((item) => {
+            const isActive = pathname.startsWith(item.href) && item.href !== '/dashboard' || pathname === item.href;
+            return (
+              <Button
+                key={item.href}
+                asChild
+                variant={'ghost'}
+                className={cn(
+                    "w-full justify-start text-muted-foreground nav-link-hover",
+                    isActive && "bg-primary/10 text-primary font-semibold"
+                )}
+              >
+                <Link href={item.href}>
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.label}
+                </Link>
+              </Button>
+            )
+        })}
       </nav>
     </aside>
   );

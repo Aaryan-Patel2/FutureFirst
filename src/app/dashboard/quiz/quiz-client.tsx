@@ -2,14 +2,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, useFormState } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { competitionQuiz, CompetitionQuizInput, CompetitionQuizOutput } from '@/ai/flows/competition-quiz';
+import { competitionQuiz, CompetitionQuizOutput } from '@/ai/flows/competition-quiz';
 import { sendQuizResultsEmail } from '@/ai/flows/send-quiz-results-email';
 import { Loader2, Lightbulb, Star, Send, Share2, GripVertical, CheckCircle, Tags, BrainCircuit, X } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
@@ -152,7 +152,7 @@ export function QuizClient() {
 
   if (results) {
     return (
-      <Card className="bg-muted/50">
+      <Card className="bg-muted/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Lightbulb className="text-primary" /> Quiz Results</CardTitle>
           <CardDescription>Based on your answers, here are our recommendations.</CardDescription>
@@ -188,7 +188,7 @@ export function QuizClient() {
             <div className="flex gap-2">
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="secondary"><Tags className="mr-2 h-4 w-4" /> Refine with Tags</Button>
+                        <Button variant="secondary" className='animated-button'><Tags className="mr-2 h-4 w-4" /> Refine with Tags</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
@@ -234,7 +234,7 @@ export function QuizClient() {
                         </div>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleRefineSubmit}>
+                            <AlertDialogAction onClick={handleRefineSubmit} className="animated-button">
                                 <BrainCircuit className="mr-2 h-4 w-4" />
                                 Re-run with Tags
                             </AlertDialogAction>
@@ -244,7 +244,7 @@ export function QuizClient() {
 
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button><Share2 className="mr-2"/> Share with Ms. Herbert</Button>
+                        <Button className='animated-button'><Share2 className="mr-2"/> Share with Ms. Herbert</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
@@ -258,7 +258,7 @@ export function QuizClient() {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleSendEmail} disabled={isSendingEmail}>
+                        <AlertDialogAction onClick={handleSendEmail} disabled={isSendingEmail} className="animated-button">
                             {isSendingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                             Confirm & Send
                         </AlertDialogAction>
@@ -273,12 +273,12 @@ export function QuizClient() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(d => onSubmit(d))} className="space-y-8">
+      <form onSubmit={form.handleSubmit(d => onSubmit(d, tags.join(' ')))} className="space-y-8">
         <FormField
             control={form.control}
             name="recommendationCount"
             render={({ field }) => (
-                <FormItem className="rounded-lg border p-4 space-y-4">
+                <FormItem className="rounded-lg border bg-card p-4 space-y-4">
                     <FormLabel className="font-semibold text-base">How many competition recommendations would you like?</FormLabel>
                     <FormControl>
                        <div className="flex items-center gap-4">
@@ -293,7 +293,7 @@ export function QuizClient() {
                        </div>
                     </FormControl>
                     <FormDescription>
-                        Choose between 2 and 5 recommendations. The default is 5.
+                        Choose between 2 and 5 recommendations.
                     </FormDescription>
                 </FormItem>
             )}
@@ -306,7 +306,7 @@ export function QuizClient() {
             name={q.id as any}
             rules={{ required: 'This field is required.' }}
             render={({ field }) => (
-              <FormItem className="space-y-3 rounded-lg border p-4">
+              <FormItem className="space-y-3 rounded-lg border bg-card p-4">
                 <FormLabel className="font-semibold text-base">{q.text}</FormLabel>
                 <FormControl>
                   {q.type === 'mcq' ? (
@@ -337,9 +337,34 @@ export function QuizClient() {
             )}
           />
         ))}
+         <div className="rounded-lg border bg-card p-4 space-y-4">
+            <Label className="font-semibold text-base">Refinement Tags (Optional)</Label>
+            <p className="text-sm text-muted-foreground">Add up to 5 tags to help guide the AI. Press space to add a tag. Use dashes for multi-word tags (e.g., `+'"'+`public-speaking`+'"'+`).</p>
+            <Input 
+                id="refine-tags"
+                placeholder="Type a tag and press space..."
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                disabled={tags.length >= 5}
+            />
+            {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                {tags.map((tag) => (
+                    <div key={tag} className="flex items-center gap-2 bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium">
+                        <span>{tag}</span>
+                        <button onClick={() => removeTag(tag)} className="text-primary/70 hover:text-primary">
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
+                ))}
+                </div>
+            )}
+        </div>
+
 
         <div className="text-center">
-            <Button type="submit" disabled={isLoading} size="lg">
+            <Button type="submit" disabled={isLoading} size="lg" className='animated-button'>
             {isLoading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
