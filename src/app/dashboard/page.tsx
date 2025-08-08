@@ -50,6 +50,11 @@ export default function DashboardHomePage() {
   const { tasks } = useProgressStore();
   const [isChartOpen, setIsChartOpen] = useState(true);
 
+  const isSameDay = (date1: Date, date2: Date) =>
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate();
+
   const weeklyChartData = useMemo(() => {
     const today = startOfDay(new Date());
     const data = [];
@@ -69,11 +74,6 @@ export default function DashboardHomePage() {
     Done: { label: 'Done', color: 'hsl(var(--accent))' },
     Pending: { label: 'Pending', color: 'hsl(var(--secondary))' },
   };
-
-  const isSameDay = (date1: Date, date2: Date) =>
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate();
 
   return (
     <div className="space-y-6">
