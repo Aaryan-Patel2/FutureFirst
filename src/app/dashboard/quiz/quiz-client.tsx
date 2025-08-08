@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { competitionQuiz, CompetitionQuizInput, CompetitionQuizOutput } from '@/ai/flows/competition-quiz';
 import { sendQuizResultsEmail } from '@/ai/flows/send-quiz-results-email';
-import { Loader2, Lightbulb, Star, Send, Share2, GripVertical, CheckCircle, Tags, BrainCircuit } from 'lucide-react';
+import { Loader2, Lightbulb, Star, Send, Share2, GripVertical, CheckCircle, Tags, BrainCircuit, X } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ToastAction } from '@/components/ui/toast';
@@ -38,7 +38,8 @@ export function QuizClient() {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [results, setResults] = useState<CompetitionQuizOutput | null>(null);
   const [rankedRecommendations, setRankedRecommendations] = useState<string[]>([]);
-  const [tags, setTags] = useState('');
+  const [tagInput, setTagInput] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
   const { toast } = useToast();
   const { setCompetitions } = useQuizStore();
 
@@ -90,9 +91,24 @@ export function QuizClient() {
     }
   }
 
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === ' ' && tagInput.trim() !== '') {
+      e.preventDefault();
+      if (tags.length < 5 && !tags.includes(tagInput.trim())) {
+        setTags([...tags, tagInput.trim()]);
+        setTagInput('');
+      }
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+  
   const handleRefineSubmit = () => {
       const currentData = form.getValues();
-      onSubmit(currentData, tags);
+      const finalTags = tags.join(' ');
+      onSubmit(currentData, finalTags);
   };
 
   const handleSendEmail = async () => {
@@ -174,14 +190,30 @@ export function QuizClient() {
                         <AlertDialogHeader>
                             <AlertDialogTitle>Refine Recommendations</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Add up to 5 tags to help us narrow down the best competitions for you. Separate tags with spaces. Use dashes for multi-word tags (e.g., `public-speaking`).
+                                Add up to 5 tags to help us narrow down the best competitions for you. Press space to add a tag. Use dashes for multi-word tags (e.g., `public-speaking`).
                             </AlertDialogDescription>
                         </AlertDialogHeader>
-                        <Input 
-                            placeholder="e.g. technology leadership presentation"
-                            value={tags}
-                            onChange={(e) => setTags(e.target.value)}
-                        />
+                        <div className="space-y-4">
+                            <Input 
+                                placeholder="Type a tag and press space..."
+                                value={tagInput}
+                                onChange={(e) => setTagInput(e.target.value)}
+                                onKeyDown={handleTagKeyDown}
+                                disabled={tags.length >= 5}
+                            />
+                             {tags.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                {tags.map((tag) => (
+                                    <div key={tag} className="flex items-center gap-2 bg-cyan-500/20 text-cyan-300 rounded-full px-3 py-1 text-sm">
+                                        <span>{tag}</span>
+                                        <button onClick={() => removeTag(tag)} className="text-cyan-300 hover:text-white">
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                                </div>
+                            )}
+                        </div>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction onClick={handleRefineSubmit}>
