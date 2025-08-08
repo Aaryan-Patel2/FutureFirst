@@ -249,7 +249,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
               onKeyDown={handleKeyDown}
               placeholder="Ask Sammy AI..."
               disabled={isLoading}
-              className="flex-1 resize-none bg-transparent border-0 focus-visible:ring-0 text-foreground placeholder:text-muted-foreground"
+              className="flex-1 resize-none bg-transparent border-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 text-foreground placeholder:text-muted-foreground"
               rows={1}
             />
             <Button type="button" onClick={handleFormSubmit} disabled={isLoading || !input.trim()} className="animated-button" size="icon">
