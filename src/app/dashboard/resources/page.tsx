@@ -34,6 +34,12 @@ const resources = [
     href: 'https://californiafbla.org/',
     icon: Trophy,
   },
+  {
+    title: 'Gold Coast Competition Repository',
+    description: 'The fully accessible GCCR, with no size or capacity limitations for study materials.',
+    href: 'https://drive.google.com/drive/folders/17WDlmzCnuFct7hYcT3yRaT3OunX6_NF-?usp=drive_link',
+    icon: BookOpen,
+  }
 ];
 
 export default function QuickResourcesPage() {
