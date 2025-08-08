@@ -52,11 +52,11 @@ export default function AiStudyBuddyPage() {
             </div>
             <div className="flex-1 overflow-y-auto">
                 {conversations.map(convo => (
-                    <button
+                    <div
                         key={convo.id}
                         onClick={() => setActiveConversationId(convo.id)}
                         className={cn(
-                            'w-full text-left p-3 border-b hover:bg-accent transition-colors group relative',
+                            'w-full text-left p-3 border-b hover:bg-accent transition-colors group relative cursor-pointer',
                             activeConversationId === convo.id && 'bg-accent'
                         )}
                     >
@@ -88,7 +88,7 @@ export default function AiStudyBuddyPage() {
                           </AlertDialogContent>
                         </AlertDialog>
 
-                    </button>
+                    </div>
                 ))}
             </div>
         </div>
