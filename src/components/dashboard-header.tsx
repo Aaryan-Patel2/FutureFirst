@@ -9,7 +9,8 @@ import Link from 'next/link';
 import { Logo } from './logo';
 
 const navItems = [
-    { href: '/dashboard', label: 'AI Study Buddy', icon: Bot },
+    { href: '/dashboard', label: 'Home', icon: Home },
+    { href: '/dashboard/ai-study-buddy', label: 'AI Study Buddy', icon: Bot },
     { href: '/dashboard/gccr', label: 'GCCR', icon: FolderGit2 },
     { href: '/dashboard/notebook', label: 'Digital Notebook', icon: Book },
     { href: '/dashboard/progress', label: 'Progress Plan', icon: CalendarCheck },

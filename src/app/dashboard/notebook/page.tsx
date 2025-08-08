@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Save, Trash2, FileText } from 'lucide-react';
+import { PlusCircle, Save, Trash2, FileText, Star } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
@@ -14,12 +14,13 @@ interface Note {
   title: string;
   content: string;
   lastModified: string;
+  isFavorite: boolean;
 }
 
 const mockNotes: Note[] = [
-  { id: 1, title: 'Marketing Midterm Study Guide', content: '# Marketing Concepts\n\n- SWOT Analysis\n- 4 Ps of Marketing\n- Target Audience', lastModified: '2 hours ago' },
-  { id: 2, title: 'Business Plan Ideas', content: '## Idea 1: Eco-friendly packaging\n\n* **Target Market:** Environmentally conscious consumers\n* **Value Prop:** Reduce plastic waste', lastModified: '1 day ago' },
-  { id: 3, title: 'Public Speaking Tips', content: '- Practice in front of a mirror\n- Know your audience\n- Use gestures effectively', lastModified: '3 days ago' },
+  { id: 1, title: 'Marketing Midterm Study Guide', content: '# Marketing Concepts\n\n- SWOT Analysis\n- 4 Ps of Marketing\n- Target Audience', lastModified: '2 hours ago', isFavorite: true },
+  { id: 2, title: 'Business Plan Ideas', content: '## Idea 1: Eco-friendly packaging\n\n* **Target Market:** Environmentally conscious consumers\n* **Value Prop:** Reduce plastic waste', lastModified: '1 day ago', isFavorite: true },
+  { id: 3, title: 'Public Speaking Tips', content: '- Practice in front of a mirror\n- Know your audience\n- Use gestures effectively', lastModified: '3 days ago', isFavorite: false },
 ];
 
 export default function NotebookPage() {
@@ -36,6 +37,7 @@ export default function NotebookPage() {
       title: 'Untitled Note',
       content: '',
       lastModified: 'Just now',
+      isFavorite: false,
     };
     setNotes([newNote, ...notes]);
     setActiveNote(newNote);
@@ -64,6 +66,14 @@ export default function NotebookPage() {
       }
   };
 
+  const toggleFavorite = () => {
+    if (activeNote) {
+      const updatedNote = { ...activeNote, isFavorite: !activeNote.isFavorite };
+      setActiveNote(updatedNote);
+      setNotes(notes.map(n => n.id === activeNote.id ? updatedNote : n));
+    }
+  };
+
   return (
     <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6 h-[calc(100vh-10rem)]">
       <Card className="md:col-span-1 lg:col-span-1 flex flex-col">
@@ -80,12 +90,15 @@ export default function NotebookPage() {
                 key={note.id}
                 onClick={() => handleSelectNote(note)}
                 className={cn(
-                  'w-full text-left p-4 border-b hover:bg-accent transition-colors',
+                  'w-full text-left p-4 border-b hover:bg-accent transition-colors flex items-center justify-between',
                   activeNote?.id === note.id && 'bg-accent'
                 )}
               >
-                <h3 className="font-semibold truncate">{note.title}</h3>
-                <p className="text-sm text-muted-foreground truncate">{note.lastModified}</p>
+                <div>
+                    <h3 className="font-semibold truncate">{note.title}</h3>
+                    <p className="text-sm text-muted-foreground truncate">{note.lastModified}</p>
+                </div>
+                {note.isFavorite && <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />}
               </button>
             ))}
           </CardContent>
@@ -103,9 +116,8 @@ export default function NotebookPage() {
                  placeholder="Note Title"
                />
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
-                  <Save className="h-4 w-4 mr-2" />
-                  Save
+                <Button variant="ghost" size="icon" onClick={toggleFavorite}>
+                  <Star className={cn("h-5 w-5", activeNote.isFavorite ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                 </Button>
                 <Button variant="destructive" size="icon" onClick={handleDeleteNote}>
                   <Trash2 className="h-4 w-4" />
