@@ -8,6 +8,7 @@ interface User {
   name: string;
   grade: string;
   email: string;
+  profilePictureUrl: string;
 }
 
 interface UserState {
@@ -19,6 +20,7 @@ const initialUser: User = {
   name: 'Student Name',
   grade: '11th Grade',
   email: 'student@example.com',
+  profilePictureUrl: 'https://placehold.co/100x100.png',
 };
 
 export const useUserStore = create<UserState>()(
