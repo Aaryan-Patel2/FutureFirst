@@ -39,6 +39,12 @@ const resources = [
     description: 'The fully accessible GCCR, with no size or capacity limitations for study materials.',
     href: 'https://drive.google.com/drive/folders/17WDlmzCnuFct7hYcT3yRaT3OunX6_NF-?usp=drive_link',
     icon: BookOpen,
+  },
+  {
+    title: "Todd Williams' Quizlet Sets",
+    description: "A comprehensive collection of Quizlet folders and sets covering most FBLA objective testing events.",
+    href: 'https://quizlet.com/user/towilliams117/folders',
+    icon: BookOpen,
   }
 ];
 
