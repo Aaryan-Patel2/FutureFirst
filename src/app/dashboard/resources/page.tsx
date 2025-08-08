@@ -30,7 +30,7 @@ const resources = [
   },
   {
     title: 'California FBLA Website',
-    description: 'Information on our state chapter.',
+    description: 'State chapter info, including resources for leadership, conferences, and more.',
     href: 'https://californiafbla.org/',
     icon: Trophy,
   },
