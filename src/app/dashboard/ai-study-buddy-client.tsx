@@ -205,7 +205,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                             <Bot size={20} />
                         </Avatar>
                     )}
-                    <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2', message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                    <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2', message.role === 'user' ? 'bg-secondary text-secondary-foreground' : 'bg-muted')}>
                         <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
                             {message.content}
                         </ReactMarkdown>
