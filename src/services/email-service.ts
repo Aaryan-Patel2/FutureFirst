@@ -10,8 +10,7 @@ interface EmailOptions {
   body: string; // Can be plain text or HTML
 }
 
-class MockEmailService {
-  async sendEmail(options: EmailOptions): Promise<{ success: boolean; message: string }> {
+async function sendEmail(options: EmailOptions): Promise<{ success: boolean; message: string }> {
     console.log('----------- MOCK EMAIL SENT -----------');
     console.log(`To: ${options.to}`);
     console.log(`From: ${options.from}`);
@@ -25,11 +24,9 @@ class MockEmailService {
     
     // Simulate a successful response
     return { success: true, message: `Mock email successfully sent to ${options.to}` };
-  }
 }
 
-const emailServiceInstance = new MockEmailService();
 
 export const emailService = {
-    sendEmail: emailServiceInstance.sendEmail,
+    sendEmail,
 };
