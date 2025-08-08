@@ -31,6 +31,7 @@ interface AiStudyBuddyState {
   setActiveConversationId: (id: string) => void;
   addMessage: (conversationId: string, message: Message) => void;
   updateConversationTitle: (conversationId: string, title: string) => void;
+  updateMessageContent: (conversationId: string, messageIndex: number, content: string) => void;
   setFileContext: (conversationId: string, fileContext: FileContext) => void;
   clearFileContext: (conversationId: string) => void;
   activeConversation: Conversation | null;
@@ -87,6 +88,18 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
                 const conversation = state.conversations.find(c => c.id === conversationId);
                 if (conversation) {
                     conversation.title = title;
+                }
+            })
+        );
+        get()._updateActiveConversation();
+      },
+
+      updateMessageContent: (conversationId, messageIndex, content) => {
+        set(
+            produce((state: AiStudyBuddyState) => {
+                const conversation = state.conversations.find(c => c.id === conversationId);
+                if (conversation && conversation.messages[messageIndex]) {
+                    conversation.messages[messageIndex].content = content;
                 }
             })
         );

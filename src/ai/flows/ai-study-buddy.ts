@@ -1,9 +1,15 @@
-// This file is for the AI Study Buddy flow, allowing users to upload files and have ongoing conversations to help them prepare for FBLA competitions.
 
 'use server';
+/**
+ * @fileOverview A streaming AI study buddy flow.
+ *
+ * - aiStudyBuddy - A function that handles the AI study buddy conversation stream.
+ * - AIStudyBuddyInput - The input type for the aiStudyBuddy function.
+ * - AIStudyBuddyOutput - The return type for the aiStudyBuddy function.
+ */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const AIStudyBuddyInputSchema = z.object({
   fileDataUri: z
@@ -22,7 +28,7 @@ const AIStudyBuddyOutputSchema = z.object({
 });
 export type AIStudyBuddyOutput = z.infer<typeof AIStudyBuddyOutputSchema>;
 
-export async function aiStudyBuddy(input: AIStudyBuddyInput): Promise<AIStudyBuddyOutput> {
+export async function aiStudyBuddy(input: AIStudyBuddyInput): Promise<ReadableStream<AIStudyBuddyOutput>> {
   return aiStudyBuddyFlow(input);
 }
 
@@ -30,7 +36,7 @@ const prompt = ai.definePrompt({
   name: 'aiStudyBuddyPrompt',
   input: {schema: AIStudyBuddyInputSchema},
   output: {schema: AIStudyBuddyOutputSchema},
-  prompt: `You are an AI study buddy helping students prepare for FBLA competitions. Your tone should be helpful, encouraging, and knowledgeable about all things FBLA.
+  prompt: `You are an AI study buddy helping students prepare for FBLA competitions. Your tone should be helpful, encouraging, and knowledgeable about all things FBLA. Your responses must be formatted using Markdown.
 
   {{#if fileDataUri}}
   The student has provided a file for context. Base your response primarily on this content.
@@ -55,9 +61,20 @@ const aiStudyBuddyFlow = ai.defineFlow(
     name: 'aiStudyBuddyFlow',
     inputSchema: AIStudyBuddyInputSchema,
     outputSchema: AIStudyBuddyOutputSchema,
+    stream: true,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    const {stream} = prompt(input);
+    
+    const outputStream = new ReadableStream({
+        async pull(controller) {
+            for await (const chunk of stream) {
+                controller.enqueue(chunk.output);
+            }
+            controller.close();
+        }
+    });
+
+    return outputStream;
   }
 );

@@ -1,8 +1,9 @@
+
 'use client';
 
-import { useState, useRef, FormEvent, useEffect, ChangeEvent } from 'react';
+import { useState, useRef, FormEvent, useEffect, ChangeEvent, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Upload, Send, Bot, User, Loader2, Paperclip, FolderGit2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -10,11 +11,12 @@ import { aiStudyBuddy, AIStudyBuddyInput } from '@/ai/flows/ai-study-buddy';
 import { generateChatTitle } from '@/ai/flows/generate-chat-title';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { useAiStudyBuddyStore, Message, FileContext } from '@/store/ai-study-buddy-store';
+import { useAiStudyBuddyStore, Message, FileContext, Conversation } from '@/store/ai-study-buddy-store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useGccrStore, GccrFile } from '@/store/gccr-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import ReactMarkdown from 'react-markdown';
 
 export function AiStudyBuddyClient() {
   const { 
@@ -22,7 +24,8 @@ export function AiStudyBuddyClient() {
     addMessage, 
     updateConversationTitle,
     setFileContext,
-    clearFileContext
+    clearFileContext,
+    updateMessageContent,
   } = useAiStudyBuddyStore();
 
   const [input, setInput] = useState('');
@@ -32,7 +35,19 @@ export function AiStudyBuddyClient() {
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { files: gccrFiles } = useGccrStore();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const resizeTextarea = () => {
+    if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  };
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [input]);
+  
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
@@ -40,7 +55,7 @@ export function AiStudyBuddyClient() {
         behavior: 'smooth',
       });
     }
-  }, [activeConversation?.messages]);
+  }, [activeConversation?.messages, isLoading]);
 
   const handleManualFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -50,9 +65,6 @@ export function AiStudyBuddyClient() {
   };
   
   const handleGccrFileSelect = (file: GccrFile) => {
-    // We can't actually read the file content from GCCR as it's mock data.
-    // So we'll just use its name for the context display.
-    // In a real app, you'd fetch the file content here.
     const mockFile = new File([`Mock content for ${file.name}`], file.name, { type: 'text/plain' });
     handleFileAsContext(mockFile, 'gccr');
     setIsGccrDialogOpen(false);
@@ -89,25 +101,31 @@ export function AiStudyBuddyClient() {
     });
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleFormSubmit = async () => {
     if (!input.trim() || isLoading || !activeConversation) return;
-
+  
     setIsLoading(true);
+    const convoId = activeConversation.id;
     const userMessage: Message = { role: 'user', content: input };
-    addMessage(activeConversation.id, userMessage);
-    
+    addMessage(convoId, userMessage);
+  
     // If it's the first message, generate a title
     if (activeConversation.messages.length === 1) {
-        generateChatTitle({ firstMessage: input })
-            .then(result => updateConversationTitle(activeConversation!.id, result.title))
-            .catch(err => console.error("Error generating title:", err)); // Fail silently
+      generateChatTitle({ firstMessage: input })
+        .then(result => updateConversationTitle(convoId, result.title))
+        .catch(err => console.error("Error generating title:", err)); // Fail silently
     }
-    
+  
     const currentInput = input;
     setInput('');
-
+    setTimeout(resizeTextarea, 0);
+  
     try {
+      // Create the assistant's message placeholder
+      const assistantMessage: Message = { role: 'assistant', content: '' };
+      addMessage(convoId, assistantMessage);
+      const assistantMessageIndex = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId)!.messages.length - 1;
+  
       const conversationHistory = activeConversation.messages.map(m => `${m.role}: ${m.content}`).join('\n');
       
       const aiInput: AIStudyBuddyInput = {
@@ -115,19 +133,48 @@ export function AiStudyBuddyClient() {
         userQuery: currentInput,
         conversationHistory,
       };
-
-      const result = await aiStudyBuddy(aiInput);
-      const assistantMessage: Message = { role: 'assistant', content: result.response };
-      addMessage(activeConversation.id, assistantMessage);
-
+  
+      const stream = await aiStudyBuddy(aiInput);
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = '';
+  
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const jsonChunks = chunk.match(/\{.*\}/g);
+        
+        if (jsonChunks) {
+            jsonChunks.forEach(jsonString => {
+                try {
+                    const parsed = JSON.parse(jsonString);
+                    if (parsed.response) {
+                        accumulatedContent += parsed.response;
+                        updateMessageContent(convoId, assistantMessageIndex, accumulatedContent);
+                    }
+                } catch (e) {
+                    console.error("Failed to parse stream chunk", e);
+                }
+            });
+        }
+      }
     } catch (error) {
       console.error('Error with AI Study Buddy:', error);
       const errorMessage: Message = { role: 'assistant', content: "Sorry, I encountered an error. Please try again." };
-      addMessage(activeConversation.id, errorMessage);
+      addMessage(convoId, errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleFormSubmit();
+    }
+  };
+  
 
   if (!activeConversation) {
     return (
@@ -147,21 +194,23 @@ export function AiStudyBuddyClient() {
                 {activeConversation.messages.map((message, index) => (
                     <div key={index} className={cn('flex items-start gap-4', message.role === 'user' ? 'justify-end' : 'justify-start')}>
                     {message.role === 'assistant' && (
-                        <Avatar className="h-8 w-8 bg-primary/20 text-primary flex items-center justify-center">
+                        <Avatar className="h-8 w-8 bg-primary/20 text-primary flex items-center justify-center shrink-0">
                             <Bot size={20} />
                         </Avatar>
                     )}
                     <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2', message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
+                            {message.content}
+                        </ReactMarkdown>
                     </div>
                     {message.role === 'user' && (
-                        <Avatar className="h-8 w-8">
-                        <AvatarFallback><User size={20} /></AvatarFallback>
+                        <Avatar className="h-8 w-8 shrink-0">
+                            <AvatarFallback><User size={20} /></AvatarFallback>
                         </Avatar>
                     )}
                     </div>
                 ))}
-                {isLoading && (
+                {isLoading && activeConversation.messages[activeConversation.messages.length - 1]?.role !== 'assistant' && (
                     <div className="flex items-start gap-4 justify-start">
                         <Avatar className="h-8 w-8 bg-primary/20 text-primary flex items-center justify-center">
                             <Bot size={20} />
@@ -174,7 +223,7 @@ export function AiStudyBuddyClient() {
                 </div>
             </ScrollArea>
             <div className="mt-4 border-t pt-4">
-                <form onSubmit={handleSubmit} className="flex items-center gap-2">
+                <form onSubmit={(e) => { e.preventDefault(); handleFormSubmit(); }} className="flex items-center gap-2">
                 <Input
                     type="file"
                     ref={fileInputRef}
@@ -220,12 +269,15 @@ export function AiStudyBuddyClient() {
                         </div>
                     </DialogContent>
                 </Dialog>
-                <Input
+                <Textarea
+                    ref={textareaRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask a question..."
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask a question... (Shift + Enter for new line)"
                     disabled={isLoading}
-                    className="flex-1"
+                    className="flex-1 resize-none"
+                    rows={1}
                 />
                 <Button type="submit" disabled={isLoading || !input.trim()}>
                     {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
