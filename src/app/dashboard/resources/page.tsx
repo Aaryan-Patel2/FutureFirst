@@ -22,6 +22,12 @@ const resources = [
     href: 'https://join.slack.com/t/saugusfbla/shared_invite/zt-3aysrseae-2GRsO2MRCFaFE5_ZW0ghCw',
     icon: Slack,
   },
+  {
+    title: 'California FBLA Website',
+    description: 'Information on our state chapter.',
+    href: 'https://californiafbla.org/',
+    icon: Trophy,
+  },
 ];
 
 export default function QuickResourcesPage() {
