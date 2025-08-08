@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow to digitize a file (image, pdf, docx) and extract text.
@@ -10,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-export const DigitizeNoteInputSchema = z.object({
+const DigitizeNoteInputSchema = z.object({
   fileDataUri: z
     .string()
     .describe(
@@ -19,16 +20,12 @@ export const DigitizeNoteInputSchema = z.object({
 });
 export type DigitizeNoteInput = z.infer<typeof DigitizeNoteInputSchema>;
 
-export const DigitizeNoteOutputSchema = z.object({
+const DigitizeNoteOutputSchema = z.object({
   digitizedContent: z
     .string()
     .describe('The extracted text content from the file, formatted as Markdown.'),
 });
 export type DigitizeNoteOutput = z.infer<typeof DigitizeNoteOutputSchema>;
-
-export async function digitizeNote(input: DigitizeNoteInput): Promise<DigitizeNoteOutput> {
-  return digitizeNoteFlow(input);
-}
 
 const digitizePrompt = ai.definePrompt({
   name: 'digitizeNotePrompt',
@@ -47,14 +44,18 @@ const digitizePrompt = ai.definePrompt({
   `,
 });
 
-export const digitizeNoteFlow = ai.defineFlow(
-  {
-    name: 'digitizeNoteFlow',
-    inputSchema: DigitizeNoteInputSchema,
-    outputSchema: DigitizeNoteOutputSchema,
-  },
-  async (input) => {
-    const { output } = await digitizePrompt(input);
-    return output!;
-  }
-);
+export async function digitizeNote(input: DigitizeNoteInput): Promise<DigitizeNoteOutput> {
+  const digitizeNoteFlow = ai.defineFlow(
+    {
+      name: 'digitizeNoteFlow',
+      inputSchema: DigitizeNoteInputSchema,
+      outputSchema: DigitizeNoteOutputSchema,
+    },
+    async (input) => {
+      const { output } = await digitizePrompt(input);
+      return output!;
+    }
+  );
+  
+  return await digitizeNoteFlow(input);
+}
