@@ -1,9 +1,12 @@
+'use client';
+
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Folder, FileText, Search, Star } from 'lucide-react';
 
-const files = [
+const initialFiles = [
   { name: 'Business Plan 2023.pdf', type: 'file', date: '2023-10-26', isFavorite: true },
   { name: 'Marketing Presentation Slides.pptx', type: 'file', date: '2023-10-25', isFavorite: false },
   { name: 'Archived Projects', type: 'folder', date: '2023-10-24', isFavorite: false },
@@ -14,6 +17,14 @@ const files = [
 ];
 
 export default function GccrPage() {
+  const [files, setFiles] = useState(initialFiles);
+
+  const toggleFavorite = (fileName: string) => {
+    setFiles(files.map(file => 
+      file.name === fileName ? { ...file, isFavorite: !file.isFavorite } : file
+    ));
+  };
+
   return (
     <div className="space-y-6">
       <header className="space-y-2">
@@ -42,9 +53,11 @@ export default function GccrPage() {
             </TableHeader>
             <TableBody>
               {files.map((file) => (
-                <TableRow key={file.name} className="cursor-pointer hover:bg-muted/50">
+                <TableRow key={file.name}>
                    <TableCell>
-                      {file.isFavorite ? <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" /> : <Star className="h-5 w-5 text-muted-foreground/50" />}
+                      <button onClick={() => toggleFavorite(file.name)} className="p-1">
+                        {file.isFavorite ? <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" /> : <Star className="h-5 w-5 text-muted-foreground/50 hover:text-yellow-400" />}
+                      </button>
                    </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
