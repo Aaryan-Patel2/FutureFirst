@@ -4,10 +4,10 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { emailService } from '@/services/email-service';
 
-const TEACHER_EMAIL = 'dherbert@hartdistrict.org';
+const TEACHER_EMAIL = 'aaryanp0302@gmail.com';
 const FROM_EMAIL = 'fbla-edge-noreply@example.com';
 
 const SendQuizResultsEmailInputSchema = z.object({
