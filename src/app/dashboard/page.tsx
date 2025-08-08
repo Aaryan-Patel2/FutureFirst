@@ -11,6 +11,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -23,6 +24,7 @@ import {
   Trophy,
   BookOpen,
   ArrowRight,
+  Settings,
 } from 'lucide-react';
 import { useNotesStore } from '@/store/notes-store';
 import { useGccrStore } from '@/store/gccr-store';
@@ -143,6 +145,14 @@ export default function DashboardHomePage() {
               <h3 className="text-xl font-semibold">{user.name}</h3>
               <p className="text-muted-foreground">{user.grade}</p>
             </CardContent>
+            <CardFooter>
+                <Button asChild variant="secondary" className="w-full">
+                    <Link href="/dashboard/settings">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Edit Profile
+                    </Link>
+                </Button>
+            </CardFooter>
           </Card>
 
           {/* Selected Competitions */}
