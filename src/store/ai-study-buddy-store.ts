@@ -1,4 +1,3 @@
-
 'use client';
 
 import { create } from 'zustand';
@@ -31,8 +30,8 @@ interface AiStudyBuddyState {
   deleteConversation: (conversationId: string) => void;
   setActiveConversationId: (id: string) => void;
   addMessage: (conversationId: string, message: Message) => void;
+  deleteMessage: (conversationId: string, messageIndex: number) => void;
   updateConversationTitle: (conversationId: string, title: string) => void;
-  updateMessageContent: (conversationId: string, messageIndex: number, content: string) => void;
   setFileContext: (conversationId: string, fileContext: FileContext) => void;
   clearFileContext: (conversationId: string) => void;
   activeConversation: Conversation | null;
@@ -95,6 +94,18 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
         get()._updateActiveConversation();
       },
       
+      deleteMessage: (conversationId, messageIndex) => {
+        set(
+          produce((state: AiStudyBuddyState) => {
+            const conversation = state.conversations.find(c => c.id === conversationId);
+            if (conversation) {
+              conversation.messages.splice(messageIndex, 1);
+            }
+          })
+        );
+        get()._updateActiveConversation();
+      },
+      
       updateConversationTitle: (conversationId, title) => {
         set(
             produce((state: AiStudyBuddyState) => {
@@ -107,18 +118,6 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
         get()._updateActiveConversation();
       },
 
-      updateMessageContent: (conversationId, messageIndex, content) => {
-        set(
-            produce((state: AiStudyBuddyState) => {
-                const conversation = state.conversations.find(c => c.id === conversationId);
-                if (conversation && conversation.messages[messageIndex]) {
-                    conversation.messages[messageIndex].content = content;
-                }
-            })
-        );
-        get()._updateActiveConversation();
-      },
-      
       setFileContext: (conversationId, fileContext) => {
         set(
             produce((state: AiStudyBuddyState) => {

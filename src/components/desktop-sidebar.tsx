@@ -21,11 +21,11 @@ export function DesktopSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-background md:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-card md:flex">
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <Logo />
-          <span className="">FBLA Edge</span>
+          <span className="text-lg">FBLA Edge</span>
         </Link>
       </div>
       <nav className="flex-1 space-y-2 p-4">
@@ -33,7 +33,7 @@ export function DesktopSidebar() {
           <Button
             key={item.href}
             asChild
-            variant={pathname === item.href ? 'secondary' : 'ghost'}
+            variant={pathname.startsWith(item.href) && item.href !== '/dashboard' || pathname === item.href ? 'secondary' : 'ghost'}
             className="w-full justify-start"
           >
             <Link href={item.href}>

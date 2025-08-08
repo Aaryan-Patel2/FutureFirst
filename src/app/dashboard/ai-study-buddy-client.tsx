@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, FormEvent, useEffect, ChangeEvent, KeyboardEvent } from 'react';
@@ -21,13 +20,11 @@ import { Input } from '@/components/ui/input';
 
 export function AiStudyBuddyClient({ conversationId }: { conversationId: string | null }) {
   const { 
-    conversations,
     activeConversation, 
     addMessage, 
     updateConversationTitle,
     setFileContext,
     clearFileContext,
-    updateMessageContent,
   } = useAiStudyBuddyStore();
 
   const [input, setInput] = useState('');
@@ -127,8 +124,8 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
   
     try {
       // Create the assistant's message placeholder
-      const assistantMessage: Message = { role: 'assistant', content: '' };
-      addMessage(convoId, assistantMessage);
+      const assistantMessagePlaceholder: Message = { role: 'assistant', content: '' };
+      addMessage(convoId, assistantMessagePlaceholder);
       
       const updatedConversation = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId);
       const assistantMessageIndex = updatedConversation!.messages.length - 1;
@@ -142,13 +139,21 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
       };
       
       const result = await aiStudyBuddy(aiInput);
-      updateMessageContent(convoId, assistantMessageIndex, result.response);
+      addMessage(convoId, { role: 'assistant', content: result.response });
 
     } catch (error) {
       console.error('Error with AI Study Buddy:', error);
       const errorMessage: Message = { role: 'assistant', content: "Sorry, I encountered an error. Please try again." };
       addMessage(convoId, errorMessage);
     } finally {
+      // Remove the placeholder message
+      const convo = useAiStudyBuddyStore.getState().conversations.find(c => c.id === convoId);
+      if (convo) {
+          const placeholderIndex = convo.messages.findIndex(m => m.role === 'assistant' && m.content === '');
+          if (placeholderIndex > -1) {
+              useAiStudyBuddyStore.getState().deleteMessage(convoId, placeholderIndex);
+          }
+      }
       setIsLoading(false);
     }
   };
@@ -183,8 +188,8 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                             <Bot size={20} />
                         </Avatar>
                     )}
-                    <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2', message.role === 'user' ? 'bg-secondary text-secondary-foreground' : 'bg-muted')}>
-                        {message.role === 'assistant' && !message.content && isLoading ? (
+                    <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-2', message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                        {message.role === 'assistant' && !message.content && isLoading && index === activeConversation.messages.length -1 ? (
                              <div className='flex items-center justify-center p-2'>
                                 <Loader2 className="h-5 w-5 animate-spin" />
                             </div>

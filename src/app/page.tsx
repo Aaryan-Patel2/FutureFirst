@@ -12,7 +12,7 @@ export default function LoginPage() {
           <div className="mx-auto mb-4">
             <Logo />
           </div>
-          <CardTitle className="text-3xl font-bold">Welcome to FBLA Edge</CardTitle>
+          <CardTitle className="text-3xl font-bold">Welcome to <span className="text-accent">FBLA Edge</span></CardTitle>
           <CardDescription>Your competitive advantage starts here.</CardDescription>
         </CardHeader>
         <CardContent>

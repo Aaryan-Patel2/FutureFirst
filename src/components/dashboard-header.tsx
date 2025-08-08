@@ -20,7 +20,7 @@ const navItems = [
 
 export function DashboardHeader() {
   const pathname = usePathname();
-  const pageTitle = navItems.find((item) => item.href === pathname)?.label || 'Dashboard';
+  const pageTitle = navItems.find((item) => pathname.startsWith(item.href))?.label || 'Dashboard';
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-8">
@@ -42,7 +42,7 @@ export function DashboardHeader() {
                         <Link
                             key={href}
                             href={href}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${pathname === href ? 'bg-muted text-primary' : 'text-muted-foreground'}`}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${pathname.startsWith(href) ? 'bg-muted text-primary' : 'text-muted-foreground'}`}
                         >
                             <Icon className="h-4 w-4" />
                             {label}
@@ -52,6 +52,7 @@ export function DashboardHeader() {
             </SheetContent>
         </Sheet>
       </div>
+      <h1 className="flex-1 text-xl font-semibold md:hidden">{pageTitle}</h1>
       <div className="flex w-full items-center justify-end gap-4 md:justify-end">
         <UserNav />
       </div>
