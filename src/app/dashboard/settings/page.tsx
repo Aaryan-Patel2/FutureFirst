@@ -99,9 +99,6 @@ export default function SettingsPage() {
               <div>
                 <h3 className="text-xl font-semibold">{user.name}</h3>
                 <p className="text-muted-foreground">{user.email}</p>
-                <Button variant="outline" size="sm" className="mt-2" onClick={handleAvatarClick}>
-                  Change Picture
-                </Button>
               </div>
             </div>
 
