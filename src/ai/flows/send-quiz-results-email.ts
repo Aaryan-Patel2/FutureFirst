@@ -5,7 +5,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { emailService } from '@/services/email-service';
+import { sendEmail } from '@/services/email-service';
 
 const TEACHER_EMAIL = 'aaryanp0302@gmail.com';
 const FROM_EMAIL = 'fbla-edge-noreply@example.com';
@@ -62,7 +62,7 @@ const sendQuizResultsEmailFlow = ai.defineFlow(
       const emailBody = output!.response;
   
       // 2. Send the email using the mock service
-      const result = await emailService.sendEmail({
+      const result = await sendEmail({
         to: TEACHER_EMAIL,
         from: FROM_EMAIL,
         subject: `FBLA Competition Choices for ${input.studentName}`,
