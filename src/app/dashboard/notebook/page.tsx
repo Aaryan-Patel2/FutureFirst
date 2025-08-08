@@ -1,20 +1,25 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Save, Trash2, FileText, Star } from 'lucide-react';
+import { PlusCircle, Save, Trash2, FileText, Star, Sparkles, Upload, Paperclip, X, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useNotesStore, Note } from '@/store/notes-store';
+import { digitizeNote } from '@/ai/flows/digitize-note';
+import { useToast } from '@/hooks/use-toast';
 
 export default function NotebookPage() {
-  const { notes, addNote, updateNote, deleteNote, toggleFavorite } = useNotesStore();
+  const { notes, addNote, updateNote, deleteNote, toggleFavorite, setFileForDigitization, clearFileForDigitization } = useNotesStore();
   const [activeNoteId, setActiveNoteId] = useState<number | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [isDigitizing, setIsDigitizing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
@@ -67,6 +72,40 @@ export default function NotebookPage() {
       toggleFavorite(activeNote.id);
     }
   };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && activeNote) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUri = reader.result as string;
+        setFileForDigitization(activeNote.id, { name: file.name, dataUri });
+        toast({ title: "File uploaded", description: `${file.name} is ready to be digitized.` });
+      };
+      reader.onerror = () => {
+        toast({ variant: "destructive", title: "Error", description: "Could not read the file." });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDigitize = async () => {
+    if (!activeNote || !activeNote.fileForDigitization) return;
+    
+    setIsDigitizing(true);
+    try {
+      const result = await digitizeNote({ fileDataUri: activeNote.fileForDigitization.dataUri });
+      const newContent = `${activeNote.content}\n\n---\n\n**Digitized from ${activeNote.fileForDigitization.name}:**\n\n${result.digitizedContent}`;
+      updateNote(activeNote.id, { content: newContent });
+      clearFileForDigitization(activeNote.id);
+      toast({ title: "Digitization Complete", description: "Text has been added to your note." });
+    } catch (error) {
+      console.error("Digitization failed:", error);
+      toast({ variant: "destructive", title: "Digitization Failed", description: "Could not extract text from the file." });
+    } finally {
+      setIsDigitizing(false);
+    }
+  };
   
   if (!isClient) {
       return null; // or a loading skeleton
@@ -106,25 +145,51 @@ export default function NotebookPage() {
       <div className="md:col-span-2 lg:col-span-3">
         {activeNote ? (
           <Card className="h-full flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
+            <CardHeader className="flex flex-row items-center justify-between p-4 border-b gap-2">
               <Input
                 value={activeNote.title}
                 onChange={(e) => handleTitleChange(e.target.value)}
                 className="text-lg font-bold border-0 shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent"
                 placeholder="Note Title"
               />
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={handleToggleFavorite}>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept="image/*,.pdf,.doc,.docx"
+                />
+                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Upload for Digitization">
+                  <Upload className="h-5 w-5 text-muted-foreground hover:text-cyan-400" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleToggleFavorite} title="Favorite">
                   <Star className={cn("h-5 w-5", activeNote.isFavorite ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                 </Button>
-                <Button variant="destructive" size="icon" onClick={handleDeleteNote}>
+                 <Button variant="ghost" size="icon" onClick={handleDigitize} disabled={!activeNote.fileForDigitization || isDigitizing} title="Digitize Note">
+                  {isDigitizing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className={cn("h-5 w-5", activeNote.fileForDigitization ? "text-cyan-400" : "text-muted-foreground")} />}
+                </Button>
+                <Button variant="destructive" size="icon" onClick={handleDeleteNote} title="Delete Note">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </CardHeader>
+            {activeNote.fileForDigitization && (
+              <div className="p-4 border-b bg-secondary/30">
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground truncate">
+                    <Paperclip className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate font-medium text-foreground">{activeNote.fileForDigitization.name}</span>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => clearFileForDigitization(activeNote.id)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
             <CardContent className="p-0 flex-1">
               <Textarea
-                placeholder="Start writing your notes here... Markdown is supported."
+                placeholder="Start writing your notes here... or upload a file and click the ✨ icon to digitize."
                 className="w-full h-full border-0 resize-none focus-visible:ring-0 p-4 bg-transparent"
                 value={activeNote.content}
                 onChange={(e) => handleContentChange(e.target.value)}

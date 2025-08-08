@@ -4,12 +4,18 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+export interface NoteFile {
+  name: string;
+  dataUri: string;
+}
+
 export interface Note {
   id: number;
   title: string;
   content: string;
   lastModified: string;
   isFavorite: boolean;
+  fileForDigitization?: NoteFile | null;
 }
 
 interface NotesState {
@@ -18,6 +24,8 @@ interface NotesState {
   updateNote: (id: number, updates: Partial<Note>) => void;
   deleteNote: (id: number) => void;
   toggleFavorite: (id: number) => void;
+  setFileForDigitization: (id: number, file: NoteFile) => void;
+  clearFileForDigitization: (id: number) => void;
 }
 
 const mockNotes: Note[] = [
@@ -57,6 +65,20 @@ export const useNotesStore = create<NotesState>()(
         set((state) => ({
           notes: state.notes.map((n) =>
             n.id === id ? { ...n, isFavorite: !n.isFavorite } : n
+          ),
+        }));
+      },
+      setFileForDigitization: (id, file) => {
+        set((state) => ({
+          notes: state.notes.map((n) =>
+            n.id === id ? { ...n, fileForDigitization: file } : n
+          ),
+        }));
+      },
+      clearFileForDigitization: (id) => {
+        set((state) => ({
+          notes: state.notes.map((n) =>
+            n.id === id ? { ...n, fileForDigitization: null } : n
           ),
         }));
       },
