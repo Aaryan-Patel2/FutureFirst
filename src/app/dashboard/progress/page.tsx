@@ -25,22 +25,13 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useProgressStore, Task } from '@/store/progress-store';
 
 const today = startOfDay(new Date());
 
-const initialTasks = [
-  { id: 'task1', label: 'Complete Marketing Chapter 1', done: true, category: 'Marketing', dueDate: today },
-  { id: 'task2', label: 'Practice Impromptu Speech (5 mins)', done: false, category: 'Public Speaking', dueDate: addDays(today, 2) },
-  { id: 'task3', label: 'Review Business Law Case Studies', done: false, category: 'Business Law', dueDate: addDays(today, 5) },
-  { id: 'task4', label: 'Draft Business Plan Executive Summary', done: true, category: 'Business Plan', dueDate: addDays(today, 8) },
-  { id: 'task5', label: 'Take practice test for Accounting I', done: false, category: 'Accounting', dueDate: addDays(today, 12) },
-  { id: 'task6', label: 'Research 2024 NLC location', done: true, category: 'General', dueDate: addDays(today, 15) },
-  { id: 'task7', label: 'Update Career Portfolio', done: false, category: 'Presentation', dueDate: addDays(today, 6) },
-];
-
 export default function ProgressPlanPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [tasks, setTasks] = useState(initialTasks);
+  const { tasks, addTask, toggleTask, deleteTask } = useProgressStore();
   const [activeTab, setActiveTab] = useState('all');
   
   // State for the "Add Task" dialog
@@ -55,21 +46,14 @@ export default function ProgressPlanPage() {
       setActiveTab('');
     }
   };
-
-  const toggleTask = (taskId: string) => {
-    setTasks(tasks.map(task => task.id === taskId ? { ...task, done: !task.done } : task));
-  };
   
-  const addTask = () => {
+  const handleAddTask = () => {
     if (taskName && taskCategory && taskDueDate) {
-        const newTask = {
-            id: `task${Date.now()}`,
+        addTask({
             label: taskName,
             category: taskCategory,
             dueDate: startOfDay(taskDueDate),
-            done: false,
-        };
-        setTasks([...tasks, newTask]);
+        });
         // Reset form and close dialog
         setTaskName('');
         setTaskCategory('');
@@ -78,26 +62,24 @@ export default function ProgressPlanPage() {
     }
   };
 
-  const deleteTask = (taskId: string) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
-  };
-
   const filteredTasks = useMemo(() => {
+    let sortedTasks = [...tasks].sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+
     if (selectedDate) {
-      return tasks.filter(task => isSameDay(task.dueDate, selectedDate));
+      return sortedTasks.filter(task => isSameDay(task.dueDate, selectedDate));
     }
     
     const now = today;
     if (activeTab === '7days') {
       const next7Days = { start: now, end: addDays(now, 7) };
-      return tasks.filter(task => isWithinInterval(task.dueDate, next7Days));
+      return sortedTasks.filter(task => isWithinInterval(task.dueDate, next7Days));
     }
     if (activeTab === '14days') {
       const next14Days = { start: now, end: addDays(now, 14) };
-      return tasks.filter(task => isWithinInterval(task.dueDate, next14Days));
+      return sortedTasks.filter(task => isWithinInterval(task.dueDate, next14Days));
     }
     
-    return tasks; // 'all' tab
+    return sortedTasks; // 'all' tab
   }, [tasks, activeTab, selectedDate]);
 
   const completedTasks = filteredTasks.filter(t => t.done).length;
@@ -260,7 +242,7 @@ export default function ProgressPlanPage() {
                             <DialogClose asChild>
                                 <Button type="button" variant="secondary">Cancel</Button>
                             </DialogClose>
-                            <Button type="submit" onClick={addTask}>Add Task</Button>
+                            <Button type="submit" onClick={handleAddTask}>Add Task</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

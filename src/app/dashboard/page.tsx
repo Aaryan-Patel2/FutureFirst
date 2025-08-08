@@ -30,6 +30,9 @@ import { useNotesStore } from '@/store/notes-store';
 import { useGccrStore } from '@/store/gccr-store';
 import { useQuizStore } from '@/store/quiz-store';
 import { useUserStore } from '@/store/user-store';
+import { useProgressStore } from '@/store/progress-store';
+import { useMemo } from 'react';
+import { isWithinInterval, startOfDay, addDays } from 'date-fns';
 
 export default function DashboardHomePage() {
   const { user } = useUserStore();
@@ -40,6 +43,19 @@ export default function DashboardHomePage() {
   const favoritedFiles = files.filter(file => file.isFavorite);
 
   const { selectedCompetitions } = useQuizStore();
+
+  const { tasks } = useProgressStore();
+
+  const weeklyTasks = useMemo(() => {
+    const today = startOfDay(new Date());
+    const next7Days = { start: today, end: addDays(today, 7) };
+    return tasks.filter(task => isWithinInterval(task.dueDate, next7Days));
+  }, [tasks]);
+
+  const completedWeeklyTasks = weeklyTasks.filter(t => t.done).length;
+  const totalWeeklyTasks = weeklyTasks.length;
+  const weeklyProgress = totalWeeklyTasks > 0 ? (completedWeeklyTasks / totalWeeklyTasks) * 100 : 0;
+
 
   return (
     <div className="space-y-6">
@@ -63,11 +79,11 @@ export default function DashboardHomePage() {
             <CardHeader>
               <CardTitle>Your Progress</CardTitle>
               <CardDescription>
-                You've completed 3 of 7 tasks this week. Keep it up!
+                You've completed {completedWeeklyTasks} of {totalWeeklyTasks} tasks this week. Keep it up!
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Progress value={42} className="h-2" />
+              <Progress value={weeklyProgress} className="h-2" />
               <Button asChild variant="link" className="px-0 mt-2 text-cyan-400">
                 <Link href="/dashboard/progress">
                   Go to Progress Plan <ArrowRight className="ml-2 h-4 w-4" />
