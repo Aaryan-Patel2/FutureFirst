@@ -81,6 +81,7 @@
   }
   .gradient-border:hover {
     box-shadow: 0 0 30px 0px rgba(0, 255, 255, 0.5), 0 0 20px 0px rgba(128, 0, 128, 0.4);
+    transform: scale(1.02);
   }
 
   .animated-button {
@@ -95,5 +96,14 @@
 
   .nav-link-hover {
     @apply transition-all duration-200 ease-in-out hover:scale-105 hover:text-primary hover:font-semibold;
+  }
+
+  /* Specific styles for the dark chat UI */
+  .chat-dark-background {
+    background-color: #0c0a09; /* A very dark, near-black color */
+  }
+
+  .copilot-input-bar {
+    @apply bg-zinc-800/80 backdrop-blur-sm border border-zinc-700 rounded-full p-2 flex items-center gap-2;
   }
 }

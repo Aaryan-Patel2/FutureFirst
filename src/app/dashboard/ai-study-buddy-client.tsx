@@ -12,12 +12,10 @@ import { generateChatTitle } from '@/ai/flows/generate-chat-title';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useAiStudyBuddyStore, Message, FileContext, Conversation } from '@/store/ai-study-buddy-store';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useGccrStore, GccrFile } from '@/store/gccr-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ReactMarkdown from 'react-markdown';
-import { Input } from '@/components/ui/input';
 import { SammyLogo } from '@/components/sammy-logo';
 
 export function AiStudyBuddyClient({ conversationId }: { conversationId: string | null }) {
@@ -128,7 +126,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
       const conversationHistory = updatedConversation.messages.map(m => `${m.role}: ${m.content}`).join('\n');
       
       const aiInput: AIStudyBuddyInput = {
-        fileDataUri: activeConversation.fileContext?.dataUri,
+        fileDataUri: updatedConversation.fileContext?.dataUri,
         userQuery: currentInput,
         conversationHistory,
       };
@@ -154,138 +152,115 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
 
   if (!activeConversation) {
     return (
-        <div className="flex h-full flex-col items-center justify-center rounded-lg border-2 border-dashed bg-card p-4 text-center">
-            <SammyLogo className="w-24 h-24 mb-4 text-primary" />
-            <h2 className="text-2xl font-semibold">Welcome to <span className="gradient-text">Sammy AI</span>!</h2>
-            <p className="text-muted-foreground">Select a conversation or start a new one to begin.</p>
+        <div className="flex h-full flex-col items-center justify-center p-4 text-center text-zinc-400">
+            <SammyLogo className="w-24 h-24 mb-4 text-zinc-500" />
+            <h2 className="text-2xl font-semibold text-zinc-200">Welcome to <span className="gradient-text">Sammy AI</span>!</h2>
+            <p className="text-zinc-400">Select a conversation or start a new one to begin.</p>
         </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
-        <div className="lg:col-span-3 flex flex-col rounded-lg border bg-card/80 backdrop-blur-sm p-4 h-full shadow-sm">
-            <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
-                <div className="space-y-6">
-                {activeConversation.messages.map((message, index) => (
-                    <div key={index} className={cn('flex items-start gap-4', message.role === 'user' ? 'justify-end' : 'justify-start')}>
-                    {message.role === 'assistant' && (
-                        <Avatar className="h-9 w-9 bg-muted text-primary flex items-center justify-center shrink-0 border">
-                           <SammyLogo className="h-6 w-6" />
-                        </Avatar>
-                    )}
-                    <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-3 shadow-md', message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-background border')}>
-                        {isLoading && index === activeConversation.messages.length - 1 ? (
-                             <div className='flex items-center justify-center p-2'>
-                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                            </div>
-                        ) : (
-                            <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none text-card-foreground">
-                                {message.content}
-                            </ReactMarkdown>
-                        )}
-                    </div>
-                    {message.role === 'user' && (
-                        <Avatar className="h-9 w-9 shrink-0">
-                             <AvatarImage src="https://placehold.co/100x100.png" alt="@student" data-ai-hint="student avatar" />
-                            <AvatarFallback className="bg-muted text-muted-foreground"><User size={20} /></AvatarFallback>
-                        </Avatar>
-                    )}
-                    </div>
-                ))}
-                </div>
-            </ScrollArea>
-            <div className="mt-4 border-t pt-4">
-                <form onSubmit={(e) => { e.preventDefault(); handleFormSubmit(); }} className="relative flex items-end gap-2">
-                <div className="absolute left-0 bottom-full mb-2 flex gap-2">
-                    <Input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleManualFileSelect}
-                        className="hidden"
-                        accept=".pdf,.doc,.docx,.txt,.md"
-                    />
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        title={'Upload File'}
-                    >
-                        <Upload className="h-4 w-4" />
-                    </Button>
-                    <Dialog open={isGccrDialogOpen} onOpenChange={setIsGccrDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button type="button" variant="outline" size="sm" title="Select from GCCR">
-                                <FolderGit2 className="h-4 w-4" />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                                <DialogTitle>Select a File from GCCR</DialogTitle>
-                            </DialogHeader>
-                            <div className="h-96 overflow-y-auto">
-                                <Table>
-                                    <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead className="hidden md:table-cell">Date Modified</TableHead>
-                                    </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                    {gccrFiles.filter(f => f.type === 'file').map((file) => (
-                                        <TableRow key={file.name} onClick={() => handleGccrFileSelect(file)} className="cursor-pointer">
-                                            <TableCell className="font-medium">{file.name}</TableCell>
-                                            <TableCell className="hidden md:table-cell text-muted-foreground">{file.date}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-                <Textarea
-                    ref={textareaRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Ask Sammy AI... (Shift + Enter for new line)"
-                    disabled={isLoading}
-                    className="flex-1 resize-none pr-16"
-                    rows={1}
-                />
-                <Button type="submit" disabled={isLoading || !input.trim()} className="animated-button absolute right-2 bottom-2" size="icon">
-                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
-                </form>
-            </div>
-        </div>
-        <div className="lg:col-span-1">
-            <Card className="h-full shadow-sm">
-                <CardHeader>
-                    <CardTitle>Context</CardTitle>
-                    <CardDescription>The file being used for this conversation.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {activeConversation.fileContext ? (
-                        <div className="flex items-center justify-between p-3 rounded-md bg-muted text-sm">
-                            <div className="flex items-center gap-3 truncate">
-                                <Paperclip className="h-5 w-5 shrink-0 text-primary" />
-                                <span className="truncate font-medium">{activeConversation.fileContext.name}</span>
-                            </div>
-                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => clearFileContext(activeConversation!.id)}>
-                                <X className="h-4 w-4"/>
-                             </Button>
+    <div className="flex flex-col h-full w-full max-w-4xl mx-auto py-6">
+        <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
+            <div className="space-y-8">
+            {activeConversation.messages.map((message, index) => (
+                <div key={index} className={cn('flex items-start gap-4', message.role === 'user' ? 'justify-end' : 'justify-start')}>
+                {message.role === 'assistant' && (
+                    <Avatar className="h-9 w-9 bg-zinc-800 text-zinc-300 flex items-center justify-center shrink-0 border border-zinc-700">
+                       <SammyLogo className="h-6 w-6" />
+                    </Avatar>
+                )}
+                <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-3', message.role === 'user' ? 'bg-zinc-800 text-zinc-200' : 'bg-transparent text-zinc-300')}>
+                    {isLoading && index === activeConversation.messages.length - 1 ? (
+                         <div className='flex items-center justify-center p-2'>
+                            <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />
                         </div>
                     ) : (
-                        <div className="text-center text-muted-foreground text-sm p-4 border-2 border-dashed rounded-lg">
-                            <p>No file context.</p>
-                            <p>Upload a file or select one from the GCCR to ask specific questions about it.</p>
-                        </div>
+                        <ReactMarkdown className="prose prose-sm prose-invert max-w-none">
+                            {message.content}
+                        </ReactMarkdown>
                     )}
-                </CardContent>
-            </Card>
+                </div>
+                {message.role === 'user' && (
+                    <Avatar className="h-9 w-9 shrink-0">
+                         <AvatarImage src="https://placehold.co/100x100.png" alt="@student" data-ai-hint="student avatar" />
+                        <AvatarFallback className="bg-zinc-800 text-zinc-300"><User size={20} /></AvatarFallback>
+                    </Avatar>
+                )}
+                </div>
+            ))}
+            </div>
+        </ScrollArea>
+        <div className="mt-auto pt-4">
+          <div className="copilot-input-bar">
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                title={'Upload File'}
+                className="text-zinc-400 hover:text-cyan-400 hover:bg-zinc-700"
+            >
+                <Upload className="h-5 w-5" />
+            </Button>
+            <Input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleManualFileSelect}
+              className="hidden"
+              accept=".pdf,.doc,.docx,.txt,.md"
+            />
+             <Dialog open={isGccrDialogOpen} onOpenChange={setIsGccrDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button type="button" variant="ghost" size="icon" title="Select from GCCR" className="text-zinc-400 hover:text-cyan-400 hover:bg-zinc-700">
+                        <FolderGit2 className="h-5 w-5" />
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Select a File from GCCR</DialogTitle>
+                    </DialogHeader>
+                    <div className="h-96 overflow-y-auto">
+                        <Table>
+                            <TableHeader>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead className="hidden md:table-cell">Date Modified</TableHead>
+                            </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {gccrFiles.filter(f => f.type === 'file').map((file) => (
+                                <TableRow key={file.name} onClick={() => handleGccrFileSelect(file)} className="cursor-pointer">
+                                    <TableCell className="font-medium">{file.name}</TableCell>
+                                    <TableCell className="hidden md:table-cell text-muted-foreground">{file.date}</TableCell>
+                                </TableRow>
+                            ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </DialogContent>
+            </Dialog>
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask Sammy AI..."
+              disabled={isLoading}
+              className="flex-1 resize-none bg-transparent border-0 focus-visible:ring-0 text-zinc-200 placeholder:text-zinc-400"
+              rows={1}
+            />
+            <Button type="button" onClick={handleFormSubmit} disabled={isLoading || !input.trim()} className="animated-button" size="icon">
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+            </Button>
+          </div>
+          {activeConversation.fileContext && (
+            <div className="text-center text-xs text-zinc-500 pt-2">
+              Context: <span className="font-semibold text-zinc-400">{activeConversation.fileContext.name}</span>
+              <button onClick={() => clearFileContext(activeConversation!.id)} className="ml-2 text-zinc-500 hover:text-zinc-300">&times;</button>
+            </div>
+          )}
         </div>
     </div>
   );
