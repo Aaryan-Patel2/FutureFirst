@@ -36,9 +36,12 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { files: gccrFiles } = useGccrStore();
+  const { items, mockupFiles, useRealData } = useGccrStore();
   const { notes } = useNotesStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Get appropriate files based on data source
+  const gccrFiles = useRealData ? (items || []) : (mockupFiles || []);
 
   const resizeTextarea = () => {
     if (textareaRef.current) {
@@ -67,8 +70,9 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     }
   };
   
-  const handleGccrFileSelect = (file: GccrFile) => {
-    const mockFile = new File([`Mock content for ${file.name}`], file.name, { type: 'text/plain' });
+  const handleGccrFileSelect = (file: GccrFile | any) => {
+    const fileName = file.name;
+    const mockFile = new File([`Mock content for ${fileName}`], fileName, { type: 'text/plain' });
     handleFileAsContext(mockFile, 'gccr');
     setIsGccrDialogOpen(false);
   }
@@ -240,12 +244,22 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                             </TableRow>
                             </TableHeader>
                             <TableBody>
-                            {gccrFiles.filter(f => f.type === 'file').map((file) => (
-                                <TableRow key={file.name} onClick={() => handleGccrFileSelect(file)} className="cursor-pointer">
-                                    <TableCell className="font-medium">{file.name}</TableCell>
-                                    <TableCell className="hidden md:table-cell text-muted-foreground">{file.date}</TableCell>
-                                </TableRow>
-                            ))}
+                            {gccrFiles.filter(f => f.type === 'file').map((file) => {
+                                // Handle both GccrItem and GccrFile structures
+                                const fileName = file.name;
+                                const fileDate = (file as any).date || 
+                                               (file as any).modifiedTime ? 
+                                               new Date((file as any).modifiedTime).toLocaleDateString() : 
+                                               'Unknown';
+                                const fileKey = (file as any).id || file.name;
+                                
+                                return (
+                                    <TableRow key={fileKey} onClick={() => handleGccrFileSelect(file)} className="cursor-pointer">
+                                        <TableCell className="font-medium">{fileName}</TableCell>
+                                        <TableCell className="hidden md:table-cell text-muted-foreground">{fileDate}</TableCell>
+                                    </TableRow>
+                                );
+                            })}
                             </TableBody>
                         </Table>
                     </div>
