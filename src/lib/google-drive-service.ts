@@ -270,7 +270,7 @@ export class GoogleDriveService {
   /**
    * Download file content with size limit
    */
-  async downloadFileContent(fileId: string, fileName: string, mimeType: string, maxSizeMB: number = 10): Promise<File> {
+  async downloadFileContent(fileId: string, fileName: string, mimeType: string, maxSizeMB: number = 20): Promise<File> {
     try {
       const accessToken = await this.getAccessToken();
       
