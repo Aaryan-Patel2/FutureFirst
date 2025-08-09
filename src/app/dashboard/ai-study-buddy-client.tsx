@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, ChangeEvent, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Upload, Send, User, Loader2, FolderGit2, X, BookOpen } from 'lucide-react';
+import { Upload, Send, User, Loader2, FolderGit2, X, BookOpen, ArrowLeft, Home, Folder, FileText, Eye, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { aiStudyBuddy, AIStudyBuddyInput } from '@/ai/flows/ai-study-buddy';
 import { generateChatTitle } from '@/ai/flows/generate-chat-title';
@@ -13,12 +13,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useAiStudyBuddyStore, Message, FileContext } from '@/store/ai-study-buddy-store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { useGccrStore, GccrFile } from '@/store/gccr-store';
 import { useNotesStore, Note } from '@/store/notes-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ReactMarkdown from 'react-markdown';
 import { SammyLogo } from '@/components/sammy-logo';
-import { Input } from '@/components/ui/input';
 
 export function AiStudyBuddyClient({ conversationId }: { conversationId: string | null }) {
   const { 
@@ -33,15 +33,16 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
   const [isLoading, setIsLoading] = useState(false);
   const [isGccrDialogOpen, setIsGccrDialogOpen] = useState(false);
   const [isNotebookDialogOpen, setIsNotebookDialogOpen] = useState(false);
+  const [gccrSearchTerm, setGccrSearchTerm] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { items, mockupFiles, useRealData } = useGccrStore();
+  const gccrStore = useGccrStore();
   const { notes } = useNotesStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Get appropriate files based on data source
-  const gccrFiles = useRealData ? (items || []) : (mockupFiles || []);
+  // Get files from the real GCCR store (since it's working perfectly)
+  const gccrFiles = gccrStore?.items || [];
 
   const resizeTextarea = () => {
     if (textareaRef.current) {
@@ -70,12 +71,74 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     }
   };
   
-  const handleGccrFileSelect = (file: GccrFile | any) => {
-    const fileName = file.name;
-    const mockFile = new File([`Mock content for ${fileName}`], fileName, { type: 'text/plain' });
-    handleFileAsContext(mockFile, 'gccr');
-    setIsGccrDialogOpen(false);
+  const handleGccrFileSelect = async (file: GccrFile | any) => {
+    try {
+      setIsGccrDialogOpen(false);
+      
+      // Show loading toast
+      const loadingToast = toast({
+        title: "Loading File",
+        description: `Downloading ${file.name}...`,
+      });
+
+      // Use the Google Drive service to download the actual file content
+      const { googleDriveService } = await import('@/lib/google-drive-service');
+      
+      // Download with 10MB limit for AI processing
+      const realFile = await googleDriveService.downloadFileContent(
+        file.id, 
+        file.name, 
+        file.mimeType || 'application/octet-stream',
+        10 // 10MB limit
+      );
+      
+      // Dismiss loading toast
+      loadingToast.dismiss();
+      
+      // Process the real file
+      await handleFileAsContext(realFile, 'gccr');
+      
+    } catch (error) {
+      console.error('Failed to load GCCR file:', error);
+      toast({
+        variant: 'destructive',
+        title: 'File Load Failed',
+        description: error instanceof Error ? error.message : 'Could not load the selected file from GCCR.',
+      });
+    }
   }
+
+  const handleGccrFolderClick = async (folderId: string, folderName: string) => {
+    try {
+      await gccrStore?.navigateToFolder(folderId, folderName);
+    } catch (error) {
+      console.error('Failed to navigate to folder:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Navigation Failed',
+        description: 'Could not open the selected folder.',
+      });
+    }
+  };
+
+  const handleGccrBack = async () => {
+    try {
+      const breadcrumbs = gccrStore?.breadcrumbs || [];
+      if (breadcrumbs.length > 1) {
+        await gccrStore?.navigateToBreadcrumb(breadcrumbs.length - 2);
+      }
+    } catch (error) {
+      console.error('Failed to navigate back:', error);
+    }
+  };
+
+  const handleGccrHome = async () => {
+    try {
+      await gccrStore?.loadGccrContents();
+    } catch (error) {
+      console.error('Failed to navigate to home:', error);
+    }
+  };
 
   const handleNoteSelect = (note: Note) => {
     const noteFile = new File([note.content], `${note.title}.md`, { type: 'text/markdown' });
@@ -231,32 +294,95 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                         <FolderGit2 className="h-5 w-5" />
                     </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-4xl">
                     <DialogHeader>
-                        <DialogTitle>Select a File from GCCR</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FolderGit2 className="h-5 w-5" />
+                            Select from GCCR
+                        </DialogTitle>
+                        
+                        {/* Navigation controls */}
+                        <div className="flex items-center gap-2 pt-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleGccrHome}
+                                title="Go to root"
+                            >
+                                <Home className="h-4 w-4" />
+                            </Button>
+                            {gccrStore?.breadcrumbs && gccrStore.breadcrumbs.length > 1 && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleGccrBack}
+                                    title="Go back"
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                            )}
+                            
+                            {/* Search */}
+                            <div className="flex-1">
+                                <Input
+                                    placeholder="Search files..."
+                                    value={gccrSearchTerm}
+                                    onChange={(e) => setGccrSearchTerm(e.target.value)}
+                                    className="max-w-sm"
+                                />
+                            </div>
+                        </div>
                     </DialogHeader>
                     <div className="h-96 overflow-y-auto">
                         <Table>
                             <TableHeader>
                             <TableRow>
                                 <TableHead>Name</TableHead>
+                                <TableHead className="hidden md:table-cell">Type</TableHead>
                                 <TableHead className="hidden md:table-cell">Date Modified</TableHead>
+                                <TableHead className="w-10">Actions</TableHead>
                             </TableRow>
                             </TableHeader>
                             <TableBody>
-                            {gccrFiles.filter(f => f.type === 'file').map((file) => {
-                                // Handle both GccrItem and GccrFile structures
-                                const fileName = file.name;
-                                const fileDate = (file as any).date || 
-                                               (file as any).modifiedTime ? 
-                                               new Date((file as any).modifiedTime).toLocaleDateString() : 
+                            {gccrFiles
+                              .filter(item => !gccrSearchTerm || item.name.toLowerCase().includes(gccrSearchTerm.toLowerCase()))
+                              .map((item) => {
+                                const fileName = item.name || 'Unnamed';
+                                const fileDate = item.modifiedTime ? 
+                                               new Date(item.modifiedTime).toLocaleDateString() : 
                                                'Unknown';
-                                const fileKey = (file as any).id || file.name;
+                                const fileKey = item.id || fileName;
+                                const isFolder = item.type === 'folder';
                                 
                                 return (
-                                    <TableRow key={fileKey} onClick={() => handleGccrFileSelect(file)} className="cursor-pointer">
-                                        <TableCell className="font-medium">{fileName}</TableCell>
-                                        <TableCell className="hidden md:table-cell text-muted-foreground">{fileDate}</TableCell>
+                                    <TableRow key={fileKey}>
+                                        <TableCell className="font-medium">
+                                            <div 
+                                                className={`flex items-center gap-2 ${isFolder ? 'cursor-pointer hover:text-blue-600' : ''}`}
+                                                onClick={isFolder ? () => handleGccrFolderClick(item.id, fileName) : undefined}
+                                            >
+                                                {isFolder ? <Folder className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                                                {fileName}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="hidden md:table-cell text-muted-foreground">
+                                            {isFolder ? 'Folder' : 'File'}
+                                        </TableCell>
+                                        <TableCell className="hidden md:table-cell text-muted-foreground">
+                                            {fileDate}
+                                        </TableCell>
+                                        <TableCell>
+                                            {!isFolder && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleGccrFileSelect(item)}
+                                                    title="Add to context"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </TableCell>
                                     </TableRow>
                                 );
                             })}

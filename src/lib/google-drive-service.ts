@@ -266,6 +266,41 @@ export class GoogleDriveService {
     if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return 'table';
     return 'file';
   }
+
+  /**
+   * Download file content with size limit
+   */
+  async downloadFileContent(fileId: string, fileName: string, mimeType: string, maxSizeMB: number = 10): Promise<File> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      // First check file size
+      const metadata = await this.getFileMetadata(fileId);
+      const fileSizeBytes = metadata.size ? parseInt(metadata.size) : 0;
+      const maxSizeBytes = maxSizeMB * 1024 * 1024; // Convert MB to bytes
+      
+      if (fileSizeBytes > maxSizeBytes) {
+        throw new Error(`File too large: ${this.formatFileSize(fileSizeBytes.toString())}. Maximum allowed size is ${maxSizeMB}MB.`);
+      }
+
+      const response = await fetch(`${this.baseUrl}/files/${fileId}?alt=media`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      return new File([blob], fileName, { type: mimeType });
+
+    } catch (error) {
+      console.error('Failed to download file:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
