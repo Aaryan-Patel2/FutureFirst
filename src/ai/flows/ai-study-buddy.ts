@@ -63,7 +63,12 @@ const aiStudyBuddyFlow = ai.defineFlow(
     outputSchema: AIStudyBuddyOutputSchema,
   },
   async (input) => {
-    const { output } = await studyBuddyPrompt(input);
+    const { output } = await studyBuddyPrompt(input, {
+      config: {
+        maxOutputTokens: 4096, // Allow longer responses
+        temperature: 0.7, // Balanced creativity
+      }
+    });
     return output!;
   }
 );

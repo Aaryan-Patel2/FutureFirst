@@ -14,6 +14,7 @@ export interface FileContext {
   name: string;
   source: 'upload' | 'gccr' | 'notebook';
   dataUri: string;
+  size?: number; // Track file size for storage management
 }
 
 export interface Conversation {
@@ -36,6 +37,7 @@ interface AiStudyBuddyState {
   setFileContext: (conversationId: string, fileContext: FileContext) => void;
   clearFileContext: (conversationId: string) => void;
   activeConversation: Conversation | null;
+  _updateActiveConversation: () => void;
 }
 
 const createNewConvo = (): Conversation => {
@@ -124,7 +126,12 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
             produce((state: AiStudyBuddyState) => {
                 const conversation = state.conversations.find(c => c.id === conversationId);
                 if (conversation) {
-                    conversation.fileContext = fileContext;
+                    // Add size tracking
+                    const contextWithSize = {
+                        ...fileContext,
+                        size: fileContext.dataUri.length
+                    };
+                    conversation.fileContext = contextWithSize;
                 }
             })
         );
@@ -153,6 +160,33 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
     {
       name: 'ai-study-buddy-storage',
       storage: createJSONStorage(() => localStorage),
+      // Exclude large file contexts from persistence to avoid storage quota issues
+      partialize: (state) => {
+        const { conversations, ...rest } = state;
+        // Only persist conversations without large file contexts
+        const sanitizedConversations = conversations.map(conv => {
+          if (conv.fileContext && conv.fileContext.dataUri) {
+            const sizeEstimate = conv.fileContext.dataUri.length;
+            // If file context is larger than 50KB, don't persist it
+            if (sizeEstimate > 50000) {
+              return {
+                ...conv,
+                fileContext: {
+                  ...conv.fileContext,
+                  dataUri: '', // Clear large data
+                  size: sizeEstimate
+                }
+              };
+            }
+          }
+          return conv;
+        });
+        
+        return {
+          ...rest,
+          conversations: sanitizedConversations
+        };
+      },
       // Custom merger to handle initialization correctly on client
       merge: (persistedState, currentState) => {
         const merged: AiStudyBuddyState = { ...currentState, ...(persistedState as any) };
@@ -176,6 +210,27 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
         merged.activeConversation = merged.conversations.find(c => c.id === merged.activeConversationId) || null;
 
         return merged;
+      },
+      // Add error handling for storage quota exceeded
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Clean up any conversations that might be too large
+          try {
+            const testSerialization = JSON.stringify(state);
+            if (testSerialization.length > 500000) { // 500KB limit
+              console.warn('AI Study Buddy store is too large, cleaning up...');
+              // Keep only the most recent 5 conversations
+              state.conversations = state.conversations.slice(0, 5);
+            }
+          } catch (error) {
+            console.warn('Storage serialization test failed:', error);
+            // Reset to default state on error
+            const newConversation = createNewConvo();
+            state.conversations = [newConversation];
+            state.activeConversationId = newConversation.id;
+            state.activeConversation = newConversation;
+          }
+        }
       },
     }
   )

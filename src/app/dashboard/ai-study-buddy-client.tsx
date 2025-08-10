@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 import { useAiStudyBuddyStore, Message, FileContext } from '@/store/ai-study-buddy-store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useGccrStore, GccrFile } from '@/store/gccr-store';
 import { useNotesStore, Note } from '@/store/notes-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -23,7 +25,9 @@ import { SammyLogo } from '@/components/sammy-logo';
 export function AiStudyBuddyClient({ conversationId }: { conversationId: string | null }) {
   const { 
     activeConversation, 
+    conversations,
     addMessage, 
+    deleteConversation,
     updateConversationTitle,
     setFileContext,
     clearFileContext,
@@ -34,6 +38,21 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
   const [isGccrDialogOpen, setIsGccrDialogOpen] = useState(false);
   const [isNotebookDialogOpen, setIsNotebookDialogOpen] = useState(false);
   const [gccrSearchTerm, setGccrSearchTerm] = useState('');
+  const [pageSelectionDialog, setPageSelectionDialog] = useState<{
+    isOpen: boolean;
+    file: any;
+    totalPages: number;
+    startPage: number;
+    endPage: number;
+    previewContent: string;
+  }>({
+    isOpen: false,
+    file: null,
+    totalPages: 0,
+    startPage: 1,
+    endPage: 1,
+    previewContent: ''
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -84,12 +103,12 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
       // Use the Google Drive service to download the actual file content
       const { googleDriveService } = await import('@/lib/google-drive-service');
       
-      // Download with 10MB limit for AI processing
+      // Download with 20MB limit for AI processing
       const realFile = await googleDriveService.downloadFileContent(
         file.id, 
         file.name, 
         file.mimeType || 'application/octet-stream',
-        10 // 10MB limit
+        20 // 20MB limit
       );
       
       // Dismiss loading toast
@@ -140,6 +159,166 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     }
   };
 
+  // New function to handle file selection with page preview
+  const handleFileWithPageSelection = async (file: any) => {
+    try {
+      setIsGccrDialogOpen(false);
+      
+      // Check if it's a PDF or large document that needs page selection
+      const isPDF = file.mimeType?.includes('pdf');
+      const isLargeDoc = file.mimeType?.includes('document') || file.mimeType?.includes('word');
+      
+      if (isPDF || isLargeDoc) {
+        // For PDFs and large docs, open page selection dialog
+        // We'll estimate page count based on file size
+        const estimatedPages = isPDF 
+          ? Math.max(1, Math.floor(parseInt(file.size || '1000000') / 50000)) // Rough PDF estimation
+          : Math.max(1, Math.floor(parseInt(file.size || '1000000') / 30000)); // Rough doc estimation
+        
+        setPageSelectionDialog({
+          isOpen: true,
+          file,
+          totalPages: Math.min(estimatedPages, 500), // Cap at 500 pages
+          startPage: 1,
+          endPage: Math.min(15, estimatedPages), // Default to first 15 pages
+          previewContent: `This ${isPDF ? 'PDF' : 'document'} has approximately ${Math.min(estimatedPages, 500)} pages. Select a range of up to 15 pages to analyze.`
+        });
+      } else {
+        // For smaller files, use original method
+        await handleGccrFileSelect(file);
+      }
+    } catch (error) {
+      console.error('Error handling file:', error);
+    }
+  };
+
+  // Function to handle page selection confirmation
+  const handlePageSelectionConfirm = async () => {
+    try {
+      const { file, startPage, endPage } = pageSelectionDialog;
+      
+      let finalStartPage = startPage;
+      let finalEndPage = endPage;
+      
+      // Validate and adjust page range
+      const pageCount = finalEndPage - finalStartPage + 1;
+      
+      if (pageCount <= 0) {
+        toast({
+          variant: 'destructive',
+          title: 'Invalid Range',
+          description: 'End page must be greater than or equal to start page.',
+        });
+        return;
+      }
+
+      // If more than 15 pages, adjust to maximum 15 from start page
+      if (pageCount > 15) {
+        finalEndPage = Math.min(finalStartPage + 14, pageSelectionDialog.totalPages);
+        
+        toast({
+          title: 'Range Adjusted',
+          description: `Adjusted to pages ${finalStartPage}-${finalEndPage} (15 pages max)`,
+        });
+        
+        // Update the dialog state to show the adjusted range
+        setPageSelectionDialog(prev => ({ ...prev, endPage: finalEndPage }));
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Brief pause to show the adjustment
+      }
+
+      // Show loading
+      const loadingToast = toast({
+        title: "Processing Pages",
+        description: `Extracting text from pages ${finalStartPage}-${finalEndPage}...`,
+      });
+
+      try {
+        // Download and process the file to extract text from specific pages
+        const { googleDriveService } = await import('@/lib/google-drive-service');
+        const realFile = await googleDriveService.downloadFileContent(
+          file.id, 
+          file.name, 
+          file.mimeType || 'application/octet-stream',
+          20 // 20MB limit
+        );
+
+        let processedContent = '';
+        
+        if (file.mimeType?.includes('pdf')) {
+          // For PDFs, extract text from specific pages
+          const pdfjs = await import('pdfjs-dist');
+          
+          // Set the worker source - use the .mjs version for pdfjs-dist v5.x
+          pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+          
+          const arrayBuffer = await realFile.arrayBuffer();
+          const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+          
+          const textPages = [];
+          const actualEndPage = Math.min(finalEndPage, pdf.numPages);
+          
+          for (let pageNum = finalStartPage; pageNum <= actualEndPage; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            
+            // Clean up the text content to remove jargon symbols and format properly
+            const pageText = textContent.items
+              .map((item: any) => item.str)
+              .join(' ')
+              .replace(/[^\w\s.,!?;:()"'-]/g, '') // Remove special symbols but keep basic punctuation
+              .replace(/\s+/g, ' ') // Normalize whitespace
+              .trim();
+            
+            if (pageText.length > 10) { // Only include pages with meaningful content
+              textPages.push(`--- Page ${pageNum} ---\n${pageText}\n`);
+            }
+          }
+          
+          processedContent = textPages.join('\n');
+        } else {
+          // For other document types, use the full content (already text)
+          processedContent = await realFile.text();
+        }
+
+        loadingToast.dismiss();
+
+        // Create a processed file object with the extracted text
+        const processedFile = new File(
+          [processedContent], 
+          `${file.name} (Pages ${finalStartPage}-${finalEndPage})`, 
+          { type: 'text/plain' }
+        );
+
+        // Process the text content
+        await handleFileAsContext(processedFile, 'gccr');
+        
+        // Close dialog
+        setPageSelectionDialog(prev => ({ ...prev, isOpen: false }));
+        
+        toast({
+          title: "Pages Added",
+          description: `Added text content from ${file.name} (Pages ${finalStartPage}-${finalEndPage}) to context.`,
+        });
+
+      } catch (error) {
+        loadingToast.dismiss();
+        console.error('Error processing file:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Processing Failed',
+          description: error instanceof Error ? error.message : 'Could not process the selected pages.',
+        });
+      }
+    } catch (error) {
+      console.error('Error processing selected pages:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Processing Failed',
+        description: 'Could not process the selected pages.',
+      });
+    }
+  };
+
   const handleNoteSelect = (note: Note) => {
     const noteFile = new File([note.content], `${note.title}.md`, { type: 'text/markdown' });
     handleFileAsContext(noteFile, 'notebook');
@@ -186,7 +365,51 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     const isFirstMessage = activeConversation.messages.length === 0;
 
     const userMessage: Message = { role: 'user', content: input };
-    addMessage(convoId, userMessage);
+    
+    try {
+      addMessage(convoId, userMessage);
+    } catch (error) {
+      console.warn('Storage error when adding user message:', error);
+      
+      if (error instanceof Error && error.message.includes('quota')) {
+        toast({
+          variant: 'destructive',
+          title: 'Storage Full',
+          description: 'Clearing old conversations to make space...',
+        });
+        
+        // Keep only the last 3 conversations
+        const allConversations = conversations;
+        if (allConversations.length > 3) {
+          allConversations.slice(3).forEach((conv: any) => {
+            deleteConversation(conv.id);
+          });
+        }
+        
+        // Try adding the message again
+        try {
+          addMessage(convoId, userMessage);
+          toast({
+            title: 'Space Cleared',
+            description: 'Message saved successfully.',
+          });
+        } catch (retryError) {
+          toast({
+            variant: 'destructive',
+            title: 'Message Failed',
+            description: 'Could not save message. Try refreshing the page.',
+          });
+          return;
+        }
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not save your message.',
+        });
+        return;
+      }
+    }
   
     if (isFirstMessage) {
       generateChatTitle({ firstMessage: input })
@@ -209,7 +432,26 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
       };
       
       const result = await aiStudyBuddy(aiInput);
-      addMessage(convoId, { role: 'assistant', content: result.response });
+      
+      try {
+        addMessage(convoId, { role: 'assistant', content: result.response });
+      } catch (storageError) {
+        console.warn('Storage error when adding AI response:', storageError);
+        // For AI responses, we don't want to lose the content, so try a fallback
+        if (storageError instanceof Error && storageError.message.includes('quota')) {
+          // Create a shortened version of the response if it's too long
+          const shortResponse = result.response.length > 1000 
+            ? result.response.substring(0, 1000) + '\n\n... [Response truncated due to storage limits]'
+            : result.response;
+          
+          try {
+            addMessage(convoId, { role: 'assistant', content: shortResponse });
+          } catch (finalError) {
+            console.error('Failed to save even shortened response:', finalError);
+            addMessage(convoId, { role: 'assistant', content: "Response generated but could not be saved due to storage limits. Please try refreshing the page." });
+          }
+        }
+      }
 
     } catch (error) {
       console.error('Error with AI Study Buddy:', error);
@@ -376,7 +618,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => handleGccrFileSelect(item)}
+                                                    onClick={() => handleFileWithPageSelection(item)}
                                                     title="Add to context"
                                                 >
                                                     <Eye className="h-4 w-4" />
@@ -391,6 +633,160 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                     </div>
                 </DialogContent>
             </Dialog>
+            
+            {/* Page Selection Dialog */}
+            <Dialog open={pageSelectionDialog.isOpen} onOpenChange={(open) => 
+                setPageSelectionDialog(prev => ({ ...prev, isOpen: open }))
+            }>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FileText className="h-5 w-5" />
+                            Select Page Range: {pageSelectionDialog.file?.name}
+                        </DialogTitle>
+                        <p className="text-sm text-muted-foreground">
+                            Choose a range of up to 15 pages to analyze. Total pages: ~{pageSelectionDialog.totalPages}
+                            {pageSelectionDialog.file?.mimeType?.includes('pdf') && (
+                                <span className="block mt-1 text-amber-600">
+                                    📄 PDF detected - Text will be extracted from the selected pages for analysis
+                                </span>
+                            )}
+                        </p>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4">
+                        {/* Page Range Selection */}
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <label htmlFor="startPage" className="text-sm font-medium">From page:</label>
+                                <Input
+                                    id="startPage"
+                                    type="number"
+                                    min={1}
+                                    max={pageSelectionDialog.totalPages}
+                                    defaultValue={pageSelectionDialog.startPage}
+                                    onBlur={(e) => {
+                                        const value = Math.max(1, Math.min(parseInt(e.target.value) || 1, pageSelectionDialog.totalPages));
+                                        setPageSelectionDialog(prev => ({
+                                            ...prev,
+                                            startPage: value,
+                                            endPage: Math.max(value, Math.min(value + 14, prev.endPage, pageSelectionDialog.totalPages))
+                                        }));
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const value = Math.max(1, Math.min(parseInt(e.currentTarget.value) || 1, pageSelectionDialog.totalPages));
+                                            setPageSelectionDialog(prev => ({
+                                                ...prev,
+                                                startPage: value,
+                                                endPage: Math.max(value, Math.min(value + 14, prev.endPage, pageSelectionDialog.totalPages))
+                                            }));
+                                        }
+                                    }}
+                                    className="w-20"
+                                />
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                                <label htmlFor="endPage" className="text-sm font-medium">To page:</label>
+                                <Input
+                                    id="endPage"
+                                    type="number"
+                                    min={pageSelectionDialog.startPage}
+                                    max={pageSelectionDialog.totalPages}
+                                    defaultValue={pageSelectionDialog.endPage}
+                                    onBlur={(e) => {
+                                        const value = Math.max(
+                                            pageSelectionDialog.startPage, 
+                                            Math.min(
+                                                parseInt(e.target.value) || pageSelectionDialog.startPage,
+                                                pageSelectionDialog.totalPages
+                                            )
+                                        );
+                                        setPageSelectionDialog(prev => ({ ...prev, endPage: value }));
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const value = Math.max(
+                                                pageSelectionDialog.startPage, 
+                                                Math.min(
+                                                    parseInt(e.currentTarget.value) || pageSelectionDialog.startPage,
+                                                    pageSelectionDialog.totalPages
+                                                )
+                                            );
+                                            setPageSelectionDialog(prev => ({ ...prev, endPage: value }));
+                                        }
+                                    }}
+                                    className="w-20"
+                                />
+                            </div>
+                            
+                            <Badge variant="outline">
+                                {pageSelectionDialog.endPage - pageSelectionDialog.startPage + 1} pages selected
+                            </Badge>
+                        </div>
+
+                        {/* Quick Selection Buttons */}
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    setPageSelectionDialog(prev => ({
+                                        ...prev,
+                                        startPage: 1,
+                                        endPage: Math.min(15, pageSelectionDialog.totalPages)
+                                    }));
+                                }}
+                            >
+                                First 15
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    const start = Math.max(1, pageSelectionDialog.totalPages - 14);
+                                    setPageSelectionDialog(prev => ({
+                                        ...prev,
+                                        startPage: start,
+                                        endPage: pageSelectionDialog.totalPages
+                                    }));
+                                }}
+                                disabled={pageSelectionDialog.totalPages <= 15}
+                            >
+                                Last 15
+                            </Button>
+                        </div>
+
+                        {/* Preview Info */}
+                        <div className="p-4 bg-muted rounded-lg">
+                            <h4 className="font-medium mb-2">What will be analyzed:</h4>
+                            <div className="text-sm text-muted-foreground space-y-1">
+                                <p>• File: {pageSelectionDialog.file?.name}</p>
+                                <p>• Pages: {pageSelectionDialog.startPage} to {pageSelectionDialog.endPage}</p>
+                                <p>• Total pages: {pageSelectionDialog.endPage - pageSelectionDialog.startPage + 1}</p>
+                                <p>• Processing: Text will be extracted and cleaned from these pages</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-4 border-t">
+                        <Button
+                            variant="outline"
+                            onClick={() => setPageSelectionDialog(prev => ({ ...prev, isOpen: false }))}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handlePageSelectionConfirm}
+                            disabled={pageSelectionDialog.endPage < pageSelectionDialog.startPage}
+                        >
+                            Add Pages {pageSelectionDialog.startPage}-{pageSelectionDialog.endPage}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+            
             <Dialog open={isNotebookDialogOpen} onOpenChange={setIsNotebookDialogOpen}>
                 <DialogTrigger asChild>
                     <Button type="button" variant="ghost" size="icon" title="Select from Notebook" className="text-muted-foreground hover:text-cyan-400">
