@@ -512,7 +512,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
             </div>
         </ScrollArea>
         <div className="mt-auto pt-4">
-          <div className="copilot-input-bar">
+          <div className="copilot-input-bar ml-4 md:ml-6">
             <Button
                 type="button"
                 variant="ghost"

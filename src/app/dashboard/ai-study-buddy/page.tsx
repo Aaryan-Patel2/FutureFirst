@@ -24,15 +24,26 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 export default function AiStudyBuddyPage() {
   const { conversations, activeConversationId, setActiveConversationId, createNewConversation, deleteConversation } = useAiStudyBuddyStore();
   const [isClient, setIsClient] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const handleDelete = (e: React.MouseEvent, convoId: string) => {
+  const openDeleteDialog = (e: React.MouseEvent, convoId: string) => {
     e.stopPropagation();
-    deleteConversation(convoId);
-  }
+    setDeleteTargetId(convoId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deleteTargetId) {
+      deleteConversation(deleteTargetId);
+    }
+    setDeleteTargetId(null);
+    setDeleteDialogOpen(false);
+  };
 
   if (!isClient) {
     return (
@@ -44,58 +55,72 @@ export default function AiStudyBuddyPage() {
 
   return (
     <div className="flex h-[calc(100vh-8rem)]">
-        {/* Chat History Sidebar */}
-        <aside className="w-64 flex-col border-r bg-background md:flex">
-            <div className="flex items-center justify-between p-2 border-b">
-                <h2 className="text-lg font-semibold px-2">Conversations</h2>
-                <Button variant="ghost" size="icon" onClick={createNewConversation} className="nav-link-hover">
-                    <Plus className="h-5 w-5" />
-                </Button>
+      {/* Chat History Sidebar */}
+      <aside className="hidden md:flex flex-col border-r bg-background w-64 lg:w-72 xl:w-80 shrink-0">
+        <div className="flex items-center justify-between gap-2 px-3 py-2 border-b">
+          <div className="flex items-center gap-2">
+            <SammyLogo className="h-6 w-6 text-cyan-400" />
+            <h2 className="text-base font-semibold tracking-tight">Conversations</h2>
+          </div>
+          <Button variant="secondary" size="icon" onClick={createNewConversation} aria-label="New conversation">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        <ScrollArea className="flex-1 p-2 space-y-1">
+          {conversations.length === 0 && (
+            <div className="text-xs text-muted-foreground p-4 text-center border rounded-md">
+              No conversations yet.
             </div>
-            <ScrollArea className="flex-1">
-                {conversations.map(convo => (
-                    <div
-                        key={convo.id}
-                        onClick={() => setActiveConversationId(convo.id)}
-                        className={cn(
-                            'w-full text-left p-3 border-l-4 border-transparent hover:bg-secondary/50 transition-all duration-200 group relative cursor-pointer',
-                            activeConversationId === convo.id && 'border-cyan-400 bg-secondary text-foreground font-semibold'
-                        )}
-                    >
-                        <p className="font-medium truncate pr-8">{convo.title}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(convo.createdAt).toLocaleDateString()}</p>
-                        
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                             <div 
-                                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 flex items-center justify-center"
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </div>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this conversation.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={(e) => handleDelete(e, convo.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+          )}
+          {conversations.map(convo => {
+            const isActive = activeConversationId === convo.id;
+            return (
+              <div
+                key={convo.id}
+                onClick={() => setActiveConversationId(convo.id)}
+                className={cn(
+                  'group relative flex items-start gap-2 rounded-md border px-3 py-2 cursor-pointer transition-colors',
+                  'hover:bg-secondary/60 hover:border-border',
+                  isActive ? 'bg-secondary border-cyan-500/60 ring-1 ring-cyan-500/40' : 'border-transparent bg-muted/30'
+                )}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className={cn('text-sm leading-snug font-medium break-words line-clamp-2 pr-6', isActive && 'text-foreground')}>{convo.title}</p>
+                  <p className="text-[10px] mt-1 text-muted-foreground">{new Date(convo.createdAt).toLocaleDateString()}</p>
+                </div>
+                <button
+                  onClick={(e) => openDeleteDialog(e, convo.id)}
+                  className="absolute right-1 top-1 h-6 w-6 flex items-center justify-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none"
+                  aria-label="Delete conversation"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
+        </ScrollArea>
+      </aside>
 
-                    </div>
-                ))}
-            </ScrollArea>
-        </aside>
+      {/* Main Chat Client */}
+      <main className="flex-1 flex flex-col min-w-0">
+        <AiStudyBuddyClient key={activeConversationId} conversationId={activeConversationId} />
+      </main>
 
-        {/* Main Chat Client */}
-        <main className="flex-1 flex flex-col">
-             <AiStudyBuddyClient key={activeConversationId} conversationId={activeConversationId} />
-        </main>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The conversation will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
