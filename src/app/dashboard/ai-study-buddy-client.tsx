@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useGccrStore, GccrFile } from '@/store/gccr-store';
+import { useGccrStore } from '@/store/gccr-store';
 import { useNotesStore, Note } from '@/store/notes-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ReactMarkdown from 'react-markdown';
@@ -90,7 +90,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     }
   };
   
-  const handleGccrFileSelect = async (file: GccrFile | any) => {
+  const handleGccrFileSelect = async (file: any) => {
     try {
       setIsGccrDialogOpen(false);
       

@@ -5,33 +5,18 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { GccrItem, googleDriveService } from '@/lib/google-drive-service';
 
-// Fallback mockup data
-export interface GccrFile {
-  name: string;
-  type: 'file' | 'folder';
-  date: string;
-  isFavorite: boolean;
-}
-
 export interface BreadcrumbItem {
   id: string;
   name: string;
 }
 
 interface GccrState {
-  // Real Google Drive data
   items: GccrItem[];
   currentFolderId: string;
   breadcrumbs: BreadcrumbItem[];
-  favorites: Set<string>; // File IDs
+  favorites: Set<string>;
   isLoading: boolean;
   error: string | null;
-  useRealData: boolean;
-  
-  // Mockup fallback data
-  mockupFiles: GccrFile[];
-  
-  // Actions
   setItems: (items: GccrItem[]) => void;
   setCurrentFolder: (folderId: string, folderName: string) => void;
   addBreadcrumb: (item: BreadcrumbItem) => void;
@@ -39,28 +24,15 @@ interface GccrState {
   navigateToFolder: (folderId: string, folderName: string) => void;
   navigateToBreadcrumb: (index: number) => void;
   toggleFavorite: (id: string) => void;
-  toggleFavoriteMockup: (name: string) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  setUseRealData: (useReal: boolean) => void;
-  toggleDataSource: () => void; // New toggle function
   clearError: () => void;
-  
-  // Data loading
   loadGccrContents: (folderId?: string, useCache?: boolean) => Promise<void>;
   searchGccr: (query: string) => Promise<GccrItem[]>;
   refreshCurrentFolder: () => Promise<void>;
 }
 
-const initialMockupFiles: GccrFile[] = [
-  { name: 'Business Plan 2023.pdf', type: 'file', date: '2023-10-26', isFavorite: true },
-  { name: 'Marketing Presentation Slides.pptx', type: 'file', date: '2023-10-25', isFavorite: false },
-  { name: 'Archived Projects', type: 'folder', date: '2023-10-24', isFavorite: false },
-  { name: 'Public Speaking Guide.docx', type: 'file', date: '2023-10-22', isFavorite: true },
-  { name: 'Event Study Cases', type: 'folder', date: '2023-10-20', isFavorite: true },
-  { name: '2022 National Winners', type: 'folder', date: '2023-09-15', isFavorite: false },
-  { name: 'Hospitality Management Test.pdf', type: 'file', date: '2023-09-10', isFavorite: false },
-];
+// Mock data removed – always using real GCCR data now.
 
 const initialBreadcrumbs: BreadcrumbItem[] = [
   { id: process.env.NEXT_PUBLIC_GOOGLE_DRIVE_GCCR_FOLDER_ID || 'root', name: 'GCCR' }
@@ -76,10 +48,7 @@ export const useGccrStore = create<GccrState>()(
       favorites: new Set<string>(),
       isLoading: false,
       error: null,
-      useRealData: true,
       
-      // Mockup fallback data - with safe defaults
-      mockupFiles: initialMockupFiles,
       
       // Actions
       setItems: (items) => set({ items: items || [] }),
@@ -130,30 +99,8 @@ export const useGccrStore = create<GccrState>()(
         };
       }),
       
-      toggleFavoriteMockup: (name) => set((state) => ({
-        mockupFiles: (state.mockupFiles || []).map((file) =>
-          file.name === name ? { ...file, isFavorite: !file.isFavorite } : file
-        ),
-      })),
-      
       setLoading: (loading) => set({ isLoading: loading }),
       setError: (error) => set({ error }),
-      setUseRealData: (useReal) => set({ useRealData: useReal }),
-      
-      toggleDataSource: () => {
-        const currentUseRealData = get().useRealData;
-        const newUseRealData = !currentUseRealData;
-        set({ 
-          useRealData: newUseRealData,
-          error: null, // Clear any previous errors
-          isLoading: false
-        });
-        
-        // If switching to real data, load the contents
-        if (newUseRealData) {
-          get().loadGccrContents();
-        }
-      },
       
       clearError: () => set({ error: null }),
       
@@ -161,11 +108,6 @@ export const useGccrStore = create<GccrState>()(
       loadGccrContents: async (folderId, useCache = true) => {
         const state = get();
         const targetFolderId = folderId || state.currentFolderId;
-        
-        // Only load if using real data
-        if (!state.useRealData) {
-          return;
-        }
         
         set({ isLoading: true, error: null });
         
@@ -181,22 +123,20 @@ export const useGccrStore = create<GccrState>()(
           
           set({ 
             items: itemsWithFavorites, 
-            isLoading: false,
-            useRealData: true
+      isLoading: false
           });
         } catch (error) {
           console.error('Failed to load GCCR contents:', error);
           set({ 
             error: error instanceof Error ? error.message : 'Failed to load contents',
-            isLoading: false,
-            useRealData: false // Fall back to mockup
+      isLoading: false
           });
         }
       },
       
       searchGccr: async (query: string) => {
         const state = get();
-        if (!query.trim() || !state.useRealData) {
+    if (!query.trim()) {
           return state.items || [];
         }
         
@@ -227,15 +167,12 @@ export const useGccrStore = create<GccrState>()(
         try {
           return {
             favorites: Array.from(state.favorites || new Set()),
-            mockupFiles: state.mockupFiles || initialMockupFiles,
-            useRealData: state.useRealData,
+            
           };
         } catch (error) {
           console.error('Error partializing state:', error);
           return {
             favorites: [],
-            mockupFiles: initialMockupFiles,
-            useRealData: true,
           };
         }
       },
@@ -247,10 +184,6 @@ export const useGccrStore = create<GccrState>()(
             state.favorites = new Set(favoritesArray);
             
             // Ensure other arrays are properly initialized
-            if (!Array.isArray(state.mockupFiles)) {
-              state.mockupFiles = initialMockupFiles;
-            }
-            
             // Ensure breadcrumbs are initialized
             if (!Array.isArray(state.breadcrumbs)) {
               state.breadcrumbs = initialBreadcrumbs;
@@ -266,10 +199,8 @@ export const useGccrStore = create<GccrState>()(
           // Reset to safe defaults
           if (state) {
             state.favorites = new Set();
-            state.mockupFiles = initialMockupFiles;
             state.breadcrumbs = initialBreadcrumbs;
             state.items = [];
-            state.useRealData = true;
           }
         }
       },

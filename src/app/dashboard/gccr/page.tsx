@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle, ArrowLeft, ChevronRight, Download, Eye, FileText, Folder, Home, Loader2, RefreshCw, Search, Star, ToggleLeft, ToggleRight } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ChevronRight, Download, Eye, FileText, Folder, Home, Loader2, RefreshCw, Search, Star } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useGccrStore } from '@/store/gccr-store';
@@ -21,19 +21,17 @@ export default function GccrPage() {
     currentFolderId,
     breadcrumbs,
     isLoading,
-    error,
-    useRealData,
-    mockupFiles,
+  error,
     loadGccrContents,
     navigateToFolder,
     navigateToBreadcrumb,
     toggleFavorite,
-    toggleFavoriteMockup,
+    
     setError,
     clearError,
     refreshCurrentFolder,
     searchGccr,
-    toggleDataSource,
+    
   } = useGccrStore();
 
   const [mounted, setMounted] = useState(false);
@@ -48,10 +46,10 @@ export default function GccrPage() {
   }, []);
 
   useEffect(() => {
-    if (mounted && useRealData) {
+    if (mounted) {
       loadGccrContents();
     }
-  }, [mounted, useRealData, loadGccrContents]);
+  }, [mounted, loadGccrContents]);
 
   // Handle search with debouncing
   useEffect(() => {
@@ -61,37 +59,26 @@ export default function GccrPage() {
     }
 
     const searchTimeout = setTimeout(async () => {
-      if (useRealData) {
-        setIsSearching(true);
-        try {
-          const results = await searchGccr(searchTerm);
-          setSearchResults(results);
-        } catch (error) {
-          toast({
-            variant: "destructive",
-            title: "Search failed",
-            description: "Could not search the repository. Please try again.",
-          });
-          setSearchResults([]);
-        } finally {
-          setIsSearching(false);
-        }
+      setIsSearching(true);
+      try {
+        const results = await searchGccr(searchTerm);
+        setSearchResults(results);
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Search failed",
+          description: "Could not search the repository. Please try again.",
+        });
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
       }
     }, 300);
 
     return () => clearTimeout(searchTimeout);
-  }, [searchTerm, useRealData, searchGccr, toast]);
-
-  // Filter mockup files for search
-  const filteredMockupFiles = useMemo(() => {
-    if (!searchTerm || useRealData || !Array.isArray(mockupFiles)) return mockupFiles || [];
-    return mockupFiles.filter(file => 
-      file.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [mockupFiles, searchTerm, useRealData]);
+  }, [searchTerm, searchGccr, toast]);
 
   const displayItems = searchTerm ? searchResults : items || [];
-  const displayMockupFiles = searchTerm ? filteredMockupFiles : mockupFiles || [];
 
   if (!mounted) {
     return (
@@ -168,9 +155,7 @@ export default function GccrPage() {
 
   const handleRefresh = () => {
     clearError();
-    if (useRealData) {
-      refreshCurrentFolder();
-    }
+    refreshCurrentFolder();
   };
 
   const handleEmergencyReset = () => {
@@ -223,41 +208,18 @@ export default function GccrPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button 
-              variant={useRealData ? "default" : "outline"}
-              size="sm"
-              onClick={toggleDataSource}
-              className="flex items-center gap-2"
-            >
-              {useRealData ? (
-                <>
-                  <ToggleRight className="h-4 w-4" />
-                  Real GCCR
-                </>
-              ) : (
-                <>
-                  <ToggleLeft className="h-4 w-4" />
-                  Mockup Mode
-                </>
-              )}
-            </Button>
-            {!useRealData && (
-              <Badge variant="secondary" className="text-orange-600">
-                Demo Data
-              </Badge>
-            )}
-            <Button 
               variant="outline" 
               size="icon"
               onClick={handleRefresh}
-              disabled={isLoading || !useRealData}
-              title={useRealData ? "Refresh" : "Switch to Real GCCR to refresh"}
+              disabled={isLoading}
+              title="Refresh"
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
         
-        {useRealData && (
+  <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             {/* Back Button */}
             <Button
@@ -292,7 +254,7 @@ export default function GccrPage() {
               ))}
             </nav>
           </div>
-        )}
+  </div>
       </header>
 
       {error && (
@@ -329,19 +291,12 @@ export default function GccrPage() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Files</span>
-            {useRealData && (
-              <Badge variant="outline">
-                {searchTerm ? `${displayItems.length} results` : `${items.length} items`}
-              </Badge>
-            )}
+            <Badge variant="outline">
+              {searchTerm ? `${displayItems.length} results` : `${items.length} items`}
+            </Badge>
           </CardTitle>
           <CardDescription>
-            {searchTerm 
-              ? `Search results for "${searchTerm}"`
-              : useRealData 
-                ? "All available files and folders in the GCCR."
-                : "Mockup data - connect to Google Drive for real files."
-            }
+            {searchTerm ? `Search results for "${searchTerm}"` : "All available files and folders in the GCCR."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -362,8 +317,7 @@ export default function GccrPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {useRealData ? (
-                  displayItems.length === 0 ? (
+                {displayItems.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         {searchTerm ? "No files found matching your search." : "No files in this folder."}
@@ -437,65 +391,7 @@ export default function GccrPage() {
                         </TableRow>
                       );
                     })
-                  )
-                ) : (
-                  displayMockupFiles.map((file) => (
-                    <TableRow key={file.name}>
-                      <TableCell>
-                        <button 
-                          onClick={() => toggleFavoriteMockup(file.name)} 
-                          className="p-1"
-                        >
-                          {file.isFavorite ? (
-                            <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                          ) : (
-                            <Star className="h-5 w-5 text-muted-foreground/50 hover:text-yellow-400" />
-                          )}
-                        </button>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
-                          {file.type === 'folder' ? (
-                            <Folder className="h-5 w-5 text-cyan-400" />
-                          ) : (
-                            <FileText className="h-5 w-5 text-muted-foreground" />
-                          )}
-                          <span>{file.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
-                        {file.date}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-muted-foreground">
-                        -
-                      </TableCell>
-                      <TableCell>
-                        {file.type === 'file' && (
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              title="Preview (Mockup)"
-                              disabled
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              title="Download (Mockup)"
-                              disabled
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                  )}
               </TableBody>
             </Table>
           )}
