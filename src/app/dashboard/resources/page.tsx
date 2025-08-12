@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUpRight, BookOpen, Slack, Trophy, Bell } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Slack, Trophy, Bell, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 const resources = [
@@ -45,6 +45,12 @@ const resources = [
     description: "A comprehensive collection of Quizlet folders and sets covering most FBLA objective testing events.",
     href: 'https://quizlet.com/user/towilliams117/folders',
     icon: BookOpen,
+  },
+  {
+    title: 'Report a Concern (Confidential)',
+    description: 'Send a private report or concern directly to chapter leadership (opens Gmail compose).',
+    href: 'https://mail.google.com/mail/?view=cm&fs=1&to=saugusfbla.reports@gmail.com&su=FBLA%20Report%20or%20Concern&body=Please%20describe%20your%20report%20or%20concern%20below:%0A%0A',
+    icon: AlertTriangle,
   }
 ];
 

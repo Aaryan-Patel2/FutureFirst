@@ -21,6 +21,7 @@ import { useNotesStore, Note } from '@/store/notes-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ReactMarkdown from 'react-markdown';
 import { SammyLogo } from '@/components/sammy-logo';
+import { useUserStore } from '@/store/user-store';
 
 export function AiStudyBuddyClient({ conversationId }: { conversationId: string | null }) {
   const { 
@@ -32,6 +33,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
     setFileContext,
     clearFileContext,
   } = useAiStudyBuddyStore();
+  const { user } = useUserStore();
 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -503,8 +505,17 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
                 </div>
                 {message.role === 'user' && (
                     <Avatar className="h-9 w-9 shrink-0">
-                         <AvatarImage src="https://placehold.co/100x100.png" alt="@student" data-ai-hint="student avatar" />
-                        <AvatarFallback className="bg-secondary text-secondary-foreground"><User size={20} /></AvatarFallback>
+                      <AvatarImage
+                        src={user?.profilePictureUrl || ''}
+                        alt={user?.name || 'User'}
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                      <AvatarFallback className="bg-secondary text-secondary-foreground text-xs font-medium">
+                        {(user?.name || 'U').split(' ').map(p => p[0]).join('').slice(0,2).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                 )}
                 </div>
