@@ -1,5 +1,7 @@
 'use client';
 import React from 'react';
+import { useUserStore } from '@/store/user-store';
+import { useRouter } from 'next/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { DesktopSidebar } from '@/components/desktop-sidebar';
@@ -12,16 +14,25 @@ export default function DashboardLayout({
 }) {
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = React.useState(false);
+  const { user, loading, initAuthListener } = useUserStore();
+  const router = useRouter();
   
   React.useEffect(() => {
     setIsClient(true);
-  }, []);
+    initAuthListener();
+  }, [initAuthListener]);
 
-  if (!isClient) {
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user || !isClient) {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-background">
-            <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
+      </div>
     );
   }
 

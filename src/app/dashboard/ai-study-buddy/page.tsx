@@ -3,6 +3,7 @@
 
 import { AiStudyBuddyClient } from '../ai-study-buddy-client';
 import { useAiStudyBuddyStore } from '@/store/ai-study-buddy-store';
+import { useUserStore } from '@/store/user-store';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,13 +24,28 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function AiStudyBuddyPage() {
   const { conversations, activeConversationId, setActiveConversationId, createNewConversation, deleteConversation } = useAiStudyBuddyStore();
+  const { user } = useUserStore();
   const [isClient, setIsClient] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const handleCreateNewConversation = async () => {
+    if (!user?.uid || isCreatingConversation) return;
+    
+    setIsCreatingConversation(true);
+    try {
+      await createNewConversation(user.uid);
+    } catch (error) {
+      console.error('Failed to create new conversation:', error);
+    } finally {
+      setIsCreatingConversation(false);
+    }
+  };
 
   const openDeleteDialog = (e: React.MouseEvent, convoId: string) => {
     e.stopPropagation();
@@ -37,9 +53,14 @@ export default function AiStudyBuddyPage() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteTargetId) {
-      deleteConversation(deleteTargetId);
+      try {
+        await deleteConversation(deleteTargetId);
+        console.log('Conversation deleted successfully');
+      } catch (error) {
+        console.error('Failed to delete conversation:', error);
+      }
     }
     setDeleteTargetId(null);
     setDeleteDialogOpen(false);
@@ -62,7 +83,13 @@ export default function AiStudyBuddyPage() {
             <SammyLogo className="h-6 w-6 text-cyan-400" />
             <h2 className="text-base font-semibold tracking-tight">Conversations</h2>
           </div>
-          <Button variant="secondary" size="icon" onClick={createNewConversation} aria-label="New conversation">
+          <Button 
+            variant="secondary" 
+            size="icon" 
+            onClick={handleCreateNewConversation} 
+            disabled={isCreatingConversation || !user?.uid}
+            aria-label="New conversation"
+          >
             <Plus className="h-4 w-4" />
           </Button>
         </div>

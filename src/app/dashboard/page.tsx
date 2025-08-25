@@ -37,22 +37,19 @@ import { isWithinInterval, startOfDay, addDays, format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { QuickTaskCreator } from '@/components/quick-task-creator';
 
 export default function DashboardHomePage() {
   const { user } = useUserStore();
   const { notes } = useNotesStore();
   const favoritedNotes = notes.filter(note => note.isFavorite);
 
-  const { items, mockupFiles, useRealData } = useGccrStore();
+  const { items } = useGccrStore();
   
-  // Get favorited files from appropriate source
+  // Get favorited files from GCCR items
   const favoritedFiles = useMemo(() => {
-    if (useRealData) {
-      return (items || []).filter(item => item.isFavorite);
-    } else {
-      return (mockupFiles || []).filter(file => file.isFavorite);
-    }
-  }, [items, mockupFiles, useRealData]);
+    return (items || []).filter(item => item.isFavorite);
+  }, [items]);
 
   const { selectedCompetitions } = useQuizStore();
   const { tasks } = useProgressStore();
@@ -89,7 +86,7 @@ export default function DashboardHomePage() {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-            Welcome back, <span className="gradient-text">{user.name.split(' ')[0]}!</span>
+            Welcome back, <span className="gradient-text">{user?.name?.split(' ')[0] || 'Student'}!</span>
           </h1>
           <p className="text-muted-foreground">
             Here's a snapshot of your FBLA journey.
@@ -167,15 +164,14 @@ export default function DashboardHomePage() {
             <CardContent>
               {favoritedFiles.length > 0 ? (
                  <ul className="space-y-3">
-                  {favoritedFiles.map((file) => {
-                    // Handle both real GCCR items and mockup files
-                    const fileName = file.name;
-                    const fileType = file.type;
-                    const fileKey = useRealData ? (file as any).id || file.name : file.name;
+                  {favoritedFiles.map((file: any) => {
+                    // Handle GCCR items
+                    const fileName = file.name || 'Untitled File';
+                    const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
                     
                     return (
-                      <li key={fileKey} className="flex items-center gap-3">
-                        {fileType === 'folder' ? (
+                      <li key={file.id || file.name} className="flex items-center gap-3">
+                        {isFolder ? (
                           <Folder className="h-5 w-5 text-cyan-400" />
                         ) : (
                           <FileText className="h-5 w-5 text-muted-foreground" />
@@ -224,11 +220,11 @@ export default function DashboardHomePage() {
           <Card>
             <CardContent className="pt-6 flex flex-col items-center text-center">
               <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src={user.profilePictureUrl} alt={user.name} data-ai-hint="student avatar" />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={user?.profilePictureUrl || ''} alt={user?.name || 'Student'} data-ai-hint="student avatar" />
+                <AvatarFallback>{user?.name?.charAt(0) || 'S'}</AvatarFallback>
               </Avatar>
-              <h3 className="text-xl font-semibold">{user.name}</h3>
-              <p className="text-muted-foreground">{user.grade}</p>
+              <h3 className="text-xl font-semibold">{user?.name || 'Student'}</h3>
+              <p className="text-muted-foreground">{user?.grade || 'Grade not set'}</p>
             </CardContent>
             <CardFooter>
                 <Button asChild variant="secondary" className="w-full">
@@ -239,6 +235,9 @@ export default function DashboardHomePage() {
                 </Button>
             </CardFooter>
           </Card>
+
+          {/* Quick Task Creator */}
+          <QuickTaskCreator />
 
           {/* Selected Competitions */}
           <Card>

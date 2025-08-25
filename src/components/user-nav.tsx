@@ -15,9 +15,24 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CreditCard, LogOut, Settings, User } from 'lucide-react';
 import { useUserStore } from '@/store/user-store';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 
 export function UserNav() {
-  const { user } = useUserStore();
+  const { user, signOutLocal } = useUserStore();
+  if (!user) {
+    return null;
+  }
+
+  async function handleLogout() {
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.error('Sign out failed', e);
+    } finally {
+      signOutLocal();
+    }
+  }
 
   return (
     <DropdownMenu>
@@ -58,11 +73,9 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/">
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
-          </Link>
+        <DropdownMenuItem onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

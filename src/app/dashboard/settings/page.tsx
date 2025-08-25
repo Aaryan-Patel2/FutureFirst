@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { User, KeyRound, Bell, Image as ImageIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { CalendarSettings } from '@/components/calendar-settings';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50, { message: 'Name cannot be longer than 50 characters.' }),
@@ -24,41 +25,57 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function SettingsPage() {
-  const { user, setUser } = useUserStore();
+  const { user, updateProfile } = useUserStore();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: user.name,
-      grade: user.grade,
+      name: user?.name || '',
+      grade: user?.grade || '',
     },
     mode: 'onChange',
   });
 
-  function onSubmit(data: ProfileFormValues) {
-    setUser(data);
-    toast({
-      title: 'Profile Updated',
-      description: 'Your changes have been saved successfully.',
-    });
+  async function onSubmit(data: ProfileFormValues) {
+    try {
+      await updateProfile(data);
+      toast({
+        title: 'Profile Updated',
+        description: 'Your changes have been saved successfully.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Update Failed',
+        description: 'Failed to save your changes. Please try again.',
+        variant: 'destructive',
+      });
+    }
   }
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setUser({ profilePictureUrl: reader.result as string });
-        toast({
-          title: 'Avatar Updated',
-          description: 'Your new profile picture has been set.',
-        });
+      reader.onloadend = async () => {
+        try {
+          await updateProfile({ profilePictureUrl: reader.result as string });
+          toast({
+            title: 'Avatar Updated',
+            description: 'Your new profile picture has been set.',
+          });
+        } catch (error) {
+          toast({
+            title: 'Update Failed',
+            description: 'Failed to update your avatar. Please try again.',
+            variant: 'destructive',
+          });
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -82,8 +99,8 @@ export default function SettingsPage() {
             <div className="flex items-center gap-6 mb-8">
               <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={user.profilePictureUrl} alt={user.name} />
-                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={user?.profilePictureUrl} alt={user?.name || ''} />
+                  <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
                   <ImageIcon className="h-8 w-8 text-white" />
@@ -97,8 +114,8 @@ export default function SettingsPage() {
                 accept="image/png, image/jpeg, image/gif"
               />
               <div>
-                <h3 className="text-xl font-semibold">{user.name}</h3>
-                <p className="text-muted-foreground">{user.email}</p>
+                <h3 className="text-xl font-semibold">{user?.name}</h3>
+                <p className="text-muted-foreground">{user?.email}</p>
               </div>
             </div>
 
@@ -148,6 +165,11 @@ export default function SettingsPage() {
         
         <Separator />
 
+        {/* Calendar Integration Settings */}
+        <CalendarSettings />
+        
+        <Separator />
+
         {/* Account Settings */}
         <Card>
             <CardHeader>
@@ -158,7 +180,7 @@ export default function SettingsPage() {
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center p-4 border rounded-lg">
                     <div>
                         <h4 className="font-semibold">Email Address</h4>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                        <p className="text-sm text-muted-foreground">{user?.email}</p>
                     </div>
                      <Button variant="outline" disabled>Change Email</Button>
                 </div>
