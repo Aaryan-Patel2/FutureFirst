@@ -28,11 +28,23 @@ export function RaffleClient() {
 
     setIsLoading(true);
     try {
-      // Get today's date in YYYY-MM-DD format
-      const today = new Date().toISOString().split('T')[0];
+      // Get today's date in YYYY-MM-DD format in Pacific Time
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+      console.log('Today (Pacific Time):', today);
+      console.log('Raw UTC Date:', new Date().toISOString().split('T')[0]);
+      console.log('Looking for code:', code.trim().toUpperCase());
+      
+      // First, let's check if code exists at all (without date filter for debugging)
+      const codesRef = collection(db, 'raffle-codes');
+      const allCodesQuery = query(codesRef, where('code', '==', code.trim().toUpperCase()));
+      const allCodesSnapshot = await getDocs(allCodesQuery);
+      
+      console.log('All matching codes:', allCodesSnapshot.size);
+      allCodesSnapshot.forEach((doc) => {
+        console.log('Found code:', doc.data());
+      });
       
       // Check if code exists for today's date
-      const codesRef = collection(db, 'raffle-codes');
       const codeQuery = query(
         codesRef, 
         where('code', '==', code.trim().toUpperCase()),
@@ -41,12 +53,13 @@ export function RaffleClient() {
       );
       
       const codeSnapshot = await getDocs(codeQuery);
+      console.log('Today matching codes:', codeSnapshot.size);
       
       if (codeSnapshot.empty) {
         toast({
           variant: 'destructive',
           title: 'Invalid Code',
-          description: 'The code you entered is not valid for today\'s study session.',
+          description: `The code you entered is not valid for today's study session. (Today: ${today})`,
         });
         return;
       }
@@ -204,7 +217,7 @@ export function RaffleClient() {
                 setCode('');
               }}
               variant="outline"
-              className="mt-4"
+              className="mt-4 border-green-600 text-green-700 hover:bg-green-600 hover:text-white hover:border-green-600"
             >
               Enter Another Code
             </Button>
