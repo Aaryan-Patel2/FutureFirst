@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Quick Database Setup Script
+# Run this if you want to set up sample codes via terminal
+
+echo "🎟️ Setting up Raffle Database..."
+echo ""
+echo "📝 You need to manually add these to Firebase Console:"
+echo ""
+echo "Collection: raffle-codes"
+echo "========================"
+echo ""
+echo "Document 1:"
+echo "- code: STUDY2025"
+echo "- date: $(date +%Y-%m-%d)"
+echo "- active: true"
+echo "- description: 'Saugus Chapter Study Session'"
+echo ""
+echo "Document 2:"
+echo "- code: WESTRANCH01"
+echo "- date: $(date +%Y-%m-%d)"
+echo "- active: true"
+echo "- description: 'West Ranch Chapter Study Session'"
+echo ""
+echo "Document 3:"
+echo "- code: DISTRICT01"
+echo "- date: $(date -d '+1 day' +%Y-%m-%d)"
+echo "- active: true"
+echo "- description: 'District Study Session'"
+echo ""
+echo "✅ Instructions saved in RAFFLE-SETUP-INSTRUCTIONS.md"
+echo "🚀 Your raffle system is ready at /dashboard/raffle"

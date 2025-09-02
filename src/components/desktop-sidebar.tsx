@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
-import { FolderGit2, Book, CalendarCheck, ClipboardList, Link as LinkIcon, Home, Settings } from 'lucide-react';
+import { FolderGit2, Book, CalendarCheck, ClipboardList, Link as LinkIcon, Home, Settings, Gift } from 'lucide-react';
 import { SammyLogo } from './sammy-logo';
 
 const navItems = [
@@ -16,6 +16,7 @@ const navItems = [
   { href: '/dashboard/notebook', label: 'Digital Notebook', icon: Book },
   { href: '/dashboard/progress', label: 'Progress Plan', icon: CalendarCheck },
   { href: '/dashboard/quiz', label: 'Competition Quiz', icon: ClipboardList },
+  { href: '/dashboard/raffle', label: 'Study Raffle', icon: Gift },
   { href: '/dashboard/resources', label: 'Quick Resources', icon: LinkIcon },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];

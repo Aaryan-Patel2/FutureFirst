@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { FolderGit2, Book, CalendarCheck, ClipboardList, Home } from 'lucide-react';
+import { FolderGit2, Book, CalendarCheck, ClipboardList, Home, Gift } from 'lucide-react';
 import { SammyLogo } from './sammy-logo';
 
 const navItems = [
@@ -12,8 +12,8 @@ const navItems = [
   { href: '/dashboard/ai-study-buddy', label: 'Sammy AI', icon: SammyLogo },
   { href: '/dashboard/gccr', label: 'GCCR', icon: FolderGit2 },
   { href: '/dashboard/notebook', label: 'Notes', icon: Book },
-  { href: '/dashboard/progress', label: 'Plan', icon: CalendarCheck },
   { href: '/dashboard/quiz', label: 'Quiz', icon: ClipboardList },
+  { href: '/dashboard/raffle', label: 'Raffle', icon: Gift },
 ];
 
 export function MobileNav() {
