@@ -37,7 +37,6 @@ import { isWithinInterval, startOfDay, addDays, format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { QuickTaskCreator } from '@/components/quick-task-creator';
 
 export default function DashboardHomePage() {
   const { user } = useUserStore();
@@ -235,9 +234,6 @@ export default function DashboardHomePage() {
                 </Button>
             </CardFooter>
           </Card>
-
-          {/* Quick Task Creator */}
-          <QuickTaskCreator />
 
           {/* Selected Competitions */}
           <Card>

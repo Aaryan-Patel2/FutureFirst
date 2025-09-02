@@ -15,7 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import { User, KeyRound, Bell, Image as ImageIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CalendarSettings } from '@/components/calendar-settings';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50, { message: 'Name cannot be longer than 50 characters.' }),
@@ -162,11 +161,6 @@ export default function SettingsPage() {
             </Form>
           </CardContent>
         </Card>
-        
-        <Separator />
-
-        {/* Calendar Integration Settings */}
-        <CalendarSettings />
         
         <Separator />
 

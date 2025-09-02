@@ -195,6 +195,30 @@ export class GoogleDriveService {
   }
 
   /**
+   * Download file content as blob
+   */
+  async downloadFile(fileId: string): Promise<Blob> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const response = await fetch(`${this.baseUrl}/files/${fileId}?alt=media`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.blob();
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get file metadata
    */
   async getFileMetadata(fileId: string): Promise<DriveFile> {

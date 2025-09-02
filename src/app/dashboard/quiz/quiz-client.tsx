@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { competitionQuiz, CompetitionQuizOutput } from '@/ai/flows/competition-quiz';
 import { sendQuizResultsEmail } from '@/ai/flows/send-quiz-results-email';
-import { Loader2, Lightbulb, Star, Send, Share2, GripVertical, CheckCircle, Tags, BrainCircuit, X } from 'lucide-react';
+import { Loader2, Lightbulb, Star, Send, Share2, GripVertical, CheckCircle, Tags, BrainCircuit, X, Home } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ToastAction } from '@/components/ui/toast';
@@ -43,8 +44,10 @@ export function QuizClient() {
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [refineCount, setRefineCount] = useState(5);
+  const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   const { toast } = useToast();
   const { setCompetitions } = useQuizStore();
+  const router = useRouter();
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -139,6 +142,27 @@ export function QuizClient() {
     }
   };
 
+  const handleReturnToDashboard = () => {
+    // Save the current state to the store
+    setCompetitions(rankedRecommendations);
+    
+    // Show success popup
+    setShowSaveConfirmation(true);
+    
+    // Show toast notification
+    toast({
+      title: "Results Saved!",
+      description: "Your quiz results have been saved successfully.",
+      action: <ToastAction altText="Close"><CheckCircle className="text-green-500" /></ToastAction>
+    });
+    
+    // Hide popup after 2 seconds and redirect
+    setTimeout(() => {
+      setShowSaveConfirmation(false);
+      router.push('/dashboard');
+    }, 2000);
+  };
+
 
   if (isLoading) {
       return (
@@ -152,44 +176,54 @@ export function QuizClient() {
 
   if (results) {
     return (
-      <Card className="bg-card/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Lightbulb className="text-cyan-400" /> Quiz Results</CardTitle>
-          <CardDescription>Based on your answers, here are our recommendations.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="font-semibold mb-2 flex items-center gap-2"><Star className="h-5 w-5 text-yellow-400" /> Recommended Competitions</h3>
-            <p className="text-sm text-muted-foreground mb-4">Drag and drop to rank your preferred competitions before sharing.</p>
-            <ul className="space-y-2">
-                {rankedRecommendations.map((rec, index) => (
-                    <li 
-                        key={rec} 
-                        className="flex items-center gap-2 p-3 rounded-md border bg-secondary cursor-grab active:cursor-grabbing"
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, index)}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={(e) => handleDrop(e, index)}
-                    >
-                        <GripVertical className="h-5 w-5 text-muted-foreground" />
-                        <span className="font-medium text-cyan-400">{index + 1}.</span>
-                        <span>{rec}</span>
-                    </li>
-                ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Advisor Feedback</h3>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{results.feedback}</p>
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-wrap gap-2 justify-between">
-          <Button onClick={() => setResults(null)} variant="outline">Take Quiz Again</Button>
-            <div className="flex gap-2">
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="secondary"><Tags className="mr-2 h-4 w-4" /> Refine with Tags</Button>
-                    </AlertDialogTrigger>
+      <>
+        <Card className="bg-card/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Lightbulb className="text-cyan-400" /> Quiz Results</CardTitle>
+            <CardDescription>Based on your answers, here are our recommendations.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <h3 className="font-semibold mb-2 flex items-center gap-2"><Star className="h-5 w-5 text-yellow-400" /> Recommended Competitions</h3>
+              <p className="text-sm text-muted-foreground mb-4">Drag and drop to rank your preferred competitions before sharing.</p>
+              <ul className="space-y-2">
+                  {rankedRecommendations.map((rec, index) => (
+                      <li 
+                          key={rec} 
+                          className="flex items-center gap-2 p-3 rounded-md border bg-secondary cursor-grab active:cursor-grabbing"
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, index)}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => handleDrop(e, index)}
+                      >
+                          <GripVertical className="h-5 w-5 text-muted-foreground" />
+                          <span className="font-medium text-cyan-400">{index + 1}.</span>
+                          <span>{rec}</span>
+                      </li>
+                  ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Advisor Feedback</h3>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{results.feedback}</p>
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-wrap gap-2 justify-between">
+            <Button onClick={() => setResults(null)} variant="outline">Take Quiz Again</Button>
+              <div className="flex gap-2">
+                  <Button 
+                    onClick={handleReturnToDashboard}
+                    variant="default" 
+                    className="animated-button"
+                  >
+                    <Home className="mr-2 h-4 w-4" />
+                    Save & Return to Dashboard
+                  </Button>
+                  
+                  <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                          <Button variant="secondary"><Tags className="mr-2 h-4 w-4" /> Refine with Tags</Button>
+                      </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Refine Recommendations</AlertDialogTitle>
@@ -251,11 +285,13 @@ export function QuizClient() {
                         <AlertDialogTitle>Confirm Your Ranked List</AlertDialogTitle>
                         <AlertDialogDescription>
                             You are about to send the following ranked list of competitions to Ms. Herbert. Please review it before sending.
-                            <ol className="list-decimal list-inside my-4 space-y-1 rounded-md border p-4 bg-background">
-                                {rankedRecommendations.map(rec => <li key={rec}>{rec}</li>)}
-                            </ol>
                         </AlertDialogDescription>
                         </AlertDialogHeader>
+                        <div className="my-4">
+                            <ol className="list-decimal list-inside space-y-1 rounded-md border p-4 bg-background">
+                                {rankedRecommendations.map(rec => <li key={rec}>{rec}</li>)}
+                            </ol>
+                        </div>
                         <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleSendEmail} disabled={isSendingEmail} className="animated-button">
@@ -268,6 +304,22 @@ export function QuizClient() {
             </div>
         </CardFooter>
       </Card>
+      
+      {/* Save Confirmation Popup */}
+      <AlertDialog open={showSaveConfirmation}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader className="text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 mb-4">
+              <CheckCircle className="h-8 w-8" />
+            </div>
+            <AlertDialogTitle className="text-lg font-semibold">Results Saved!</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your quiz results have been saved successfully. Redirecting to dashboard...
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
     );
   }
 

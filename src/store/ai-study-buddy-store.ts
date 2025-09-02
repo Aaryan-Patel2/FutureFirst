@@ -16,6 +16,11 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp?: Date;
+  attachments?: {
+    fileName: string;
+    source?: 'upload' | 'gccr' | 'notebook';
+    pages?: number;
+  }[];
 }
 
 export interface FileContext {
@@ -179,12 +184,10 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
             if (indexToRemove !== -1) {
               state.conversations.splice(indexToRemove, 1);
               
-              // Update active conversation if needed
+              // Clear active conversation if it was the deleted one
               if (state.activeConversationId === conversationId) {
-                // Try to select the next conversation, or the first one, or null if none left
-                const nextConversation = state.conversations[indexToRemove] || state.conversations[0] || null;
-                state.activeConversationId = nextConversation?.id || null;
-                console.log('Updated active conversation to:', state.activeConversationId);
+                state.activeConversationId = null;
+                console.log('Cleared active conversation - user now has no active conversation');
               }
             }
           })

@@ -5,7 +5,7 @@
 - AI Study Buddy: Gemini-powered AI chatbot for competition preparation, allowing users to upload files and maintain context memory for ongoing conversations. It acts as a tool by using reasoning to determine how to best respond, given the document store provided.
 - GCCR Integration: Browse and interact with the Gold Coast Competition Repository (GCCR) directly within the app, with seamless integration with Google Drive.
 - Digital Notebook: A note-taking feature with rich text support (Markdown/LaTeX) and image uploads, enabling users to create and store study notes.
-- Progress Plan: Study progress tracker with binary completion tracking and Google Calendar synchronization to visualize study habits and due dates.
+- Progress Plan: Study progress tracker with binary completion tracking and built-in calendar to visualize study habits and due dates.
 - Competition Quiz: A quiz that uses Gemini to evaluate user responses and recommend relevant competitions, forwarding the results to Ms. Herbert and saving them for future reference. It acts as a tool by using reasoning to select which areas of study the student is ready for.
 - Quick Resources: Quick links to essential FBLA resources and the Saugus FBLA Slack channel for easy access to information and communication.
 - Secure Authentication: Implements secure authentication via Google Sign-In, verifying user emails against a Google Sheet to ensure authorized access.

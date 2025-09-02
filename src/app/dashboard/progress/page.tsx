@@ -247,13 +247,6 @@ export default function ProgressPlanPage() {
                     </DialogContent>
                 </Dialog>
           </CardHeader>
-          <CardContent>
-            <Button className="w-full">
-              <Settings className="h-4 w-4 mr-2" />
-              Connect Google Calendar
-            </Button>
-            <p className="text-xs text-muted-foreground mt-2 text-center">Sync events and due dates seamlessly.</p>
-          </CardContent>
         </Card>
       </div>
     </div>
