@@ -32,7 +32,7 @@ import { useGccrStore } from '@/store/gccr-store';
 import { useQuizStore } from '@/store/quiz-store';
 import { useUserStore } from '@/store/user-store';
 import { useProgressStore } from '@/store/progress-store';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { isWithinInterval, startOfDay, addDays, format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -43,12 +43,28 @@ export default function DashboardHomePage() {
   const { notes } = useNotesStore();
   const favoritedNotes = notes.filter(note => note.isFavorite);
 
-  const { items } = useGccrStore();
+  const { items, favorites, getAllFavoritedItems } = useGccrStore();
   
-  // Get favorited files from GCCR items
-  const favoritedFiles = useMemo(() => {
-    return (items || []).filter(item => item.isFavorite);
-  }, [items]);
+  // Get favorited files from all GCCR folders
+  const [favoritedFiles, setFavoritedFiles] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const allFavorites = await getAllFavoritedItems();
+        console.log('All favorited items:', allFavorites);
+        setFavoritedFiles(allFavorites);
+      } catch (error) {
+        console.error('Failed to load favorites:', error);
+      }
+    };
+    
+    if (favorites && favorites.size > 0) {
+      loadFavorites();
+    } else {
+      setFavoritedFiles([]);
+    }
+  }, [favorites, getAllFavoritedItems]);
 
   const { selectedCompetitions } = useQuizStore();
   const { tasks } = useProgressStore();
@@ -162,7 +178,7 @@ export default function DashboardHomePage() {
             </CardHeader>
             <CardContent>
               {favoritedFiles.length > 0 ? (
-                 <ul className="space-y-3">
+                <ul className="space-y-3">
                   {favoritedFiles.map((file: any) => {
                     // Handle GCCR items
                     const fileName = file.name || 'Untitled File';

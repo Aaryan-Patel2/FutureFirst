@@ -144,15 +144,33 @@ export default function NotebookPage() {
                 key={note.id}
                 onClick={() => handleSelectNote(note)}
                 className={cn(
-                  'w-full text-left p-4 border-b hover:bg-secondary transition-colors flex items-center justify-between',
+                  'w-full text-left p-4 border-b hover:bg-secondary transition-colors',
                   activeNote?.id === note.id && 'bg-secondary'
                 )}
               >
-                <div>
-                  <h3 className="font-semibold truncate">{note.title}</h3>
-                  <p className="text-sm text-muted-foreground truncate">{note.lastModified}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold break-all leading-5">{note.title}</h3>
+                    <p className="text-sm text-muted-foreground truncate mt-1">{note.lastModified}</p>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(note.id);
+                    }}
+                    className="flex-shrink-0 p-1 hover:bg-muted rounded transition-colors"
+                    title={note.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    <Star 
+                      className={cn(
+                        "h-4 w-4 transition-colors",
+                        note.isFavorite 
+                          ? "text-yellow-400 fill-yellow-400" 
+                          : "text-muted-foreground hover:text-yellow-400"
+                      )} 
+                    />
+                  </button>
                 </div>
-                {note.isFavorite && <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />}
               </button>
             ))}
           </CardContent>

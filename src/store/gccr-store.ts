@@ -30,6 +30,7 @@ interface GccrState {
   loadGccrContents: (folderId?: string, useCache?: boolean) => Promise<void>;
   searchGccr: (query: string) => Promise<GccrItem[]>;
   refreshCurrentFolder: () => Promise<void>;
+  getAllFavoritedItems: () => Promise<GccrItem[]>;
 }
 
 // Mock data removed – always using real GCCR data now.
@@ -158,6 +159,42 @@ export const useGccrStore = create<GccrState>()(
       refreshCurrentFolder: async () => {
         const { currentFolderId } = get();
         await get().loadGccrContents(currentFolderId, false); // Force refresh
+      },
+
+      getAllFavoritedItems: async () => {
+        const { favorites } = get();
+        if (!favorites || favorites.size === 0) {
+          return [];
+        }
+
+        try {
+          // Search for all favorited items by their IDs
+          const favoritedItems: GccrItem[] = [];
+          
+          // Get all favorited IDs
+          const favoriteIds = Array.from(favorites);
+          
+          // For now, search for each item individually
+          // This is not the most efficient but will work
+          for (const itemId of favoriteIds) {
+            try {
+              // Try to get the item details - this is a simplified approach
+              // In a real implementation, you might want to cache item metadata
+              const searchResults = await googleDriveService.searchGccr('');
+              const foundItem = searchResults.find(item => item.id === itemId);
+              if (foundItem) {
+                favoritedItems.push({ ...foundItem, isFavorite: true });
+              }
+            } catch (error) {
+              console.warn(`Failed to get details for favorited item ${itemId}:`, error);
+            }
+          }
+
+          return favoritedItems;
+        } catch (error) {
+          console.error('Failed to get favorited items:', error);
+          return [];
+        }
       },
     }),
     {
