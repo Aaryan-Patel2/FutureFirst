@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CreditCard, LogOut, Settings, User } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { useUserStore } from '@/store/user-store';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
@@ -59,16 +59,6 @@ export function UserNav() {
             <Link href="/dashboard/settings">
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <CreditCard className="mr-2 h-4 w-4" />
-            <span>Billing</span>
-          </DropdownMenuItem>
-           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>

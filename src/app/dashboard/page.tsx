@@ -45,25 +45,35 @@ export default function DashboardHomePage() {
 
   const { items, favorites, getAllFavoritedItems } = useGccrStore();
   
-  // Get favorited files from all GCCR folders
+  // Get ALL favorited files from everywhere
   const [favoritedFiles, setFavoritedFiles] = useState<any[]>([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
 
   useEffect(() => {
-    const loadFavorites = async () => {
+    const loadAllFavorites = async () => {
+      console.log('Favorites changed:', favorites);
+      console.log('Favorites size:', favorites?.size);
+      
+      if (!favorites || favorites.size === 0) {
+        setFavoritedFiles([]);
+        return;
+      }
+
+      setLoadingFavorites(true);
       try {
+        console.log('Calling getAllFavoritedItems...');
         const allFavorites = await getAllFavoritedItems();
-        console.log('All favorited items:', allFavorites);
+        console.log('Got favorites:', allFavorites);
         setFavoritedFiles(allFavorites);
       } catch (error) {
         console.error('Failed to load favorites:', error);
+        setFavoritedFiles([]);
+      } finally {
+        setLoadingFavorites(false);
       }
     };
-    
-    if (favorites && favorites.size > 0) {
-      loadFavorites();
-    } else {
-      setFavoritedFiles([]);
-    }
+
+    loadAllFavorites();
   }, [favorites, getAllFavoritedItems]);
 
   const { selectedCompetitions } = useQuizStore();
@@ -177,15 +187,19 @@ export default function DashboardHomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {favoritedFiles.length > 0 ? (
+              {loadingFavorites ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400"></div>
+                  Loading favorites...
+                </div>
+              ) : favoritedFiles.length > 0 ? (
                 <ul className="space-y-3">
                   {favoritedFiles.map((file: any) => {
-                    // Handle GCCR items
                     const fileName = file.name || 'Untitled File';
                     const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
                     
                     return (
-                      <li key={file.id || file.name} className="flex items-center gap-3">
+                      <li key={file.id} className="flex items-center gap-3">
                         {isFolder ? (
                           <Folder className="h-5 w-5 text-cyan-400" />
                         ) : (

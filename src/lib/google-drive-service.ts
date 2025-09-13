@@ -125,6 +125,54 @@ export class GoogleDriveService {
   }
 
   /**
+   * Get details for a specific file by ID
+   */
+  async getFileDetails(fileId: string): Promise<GccrItem | null> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const url = new URL(`${this.baseUrl}/files/${fileId}`);
+      url.searchParams.set('fields', 'id,name,mimeType,parents,modifiedTime,size,webViewLink,webContentLink,thumbnailLink,iconLink');
+
+      const response = await fetch(url.toString(), {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.warn(`File ${fileId} not found`);
+          return null;
+        }
+        throw new Error(`Failed to fetch file details: ${response.status} ${response.statusText}`);
+      }
+
+      const file: DriveFile = await response.json();
+      
+      return {
+        id: file.id,
+        name: file.name,
+        type: this.isFolder(file.mimeType) ? 'folder' : 'file',
+        mimeType: file.mimeType,
+        modifiedTime: file.modifiedTime,
+        size: file.size,
+        parentId: file.parents?.[0],
+        webViewLink: file.webViewLink,
+        webContentLink: file.webContentLink,
+        thumbnailLink: file.thumbnailLink,
+        iconLink: file.iconLink,
+        isFavorite: false,
+      };
+
+    } catch (error) {
+      console.error(`Error fetching file details for ${fileId}:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Get GCCR root folder contents
    */
   async getGccrContents(useCache = true): Promise<GccrItem[]> {

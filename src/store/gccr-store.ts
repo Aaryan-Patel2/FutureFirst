@@ -163,33 +163,32 @@ export const useGccrStore = create<GccrState>()(
 
       getAllFavoritedItems: async () => {
         const { favorites } = get();
+        console.log('getAllFavoritedItems called with favorites:', favorites);
+        
         if (!favorites || favorites.size === 0) {
           return [];
         }
 
         try {
-          // Search for all favorited items by their IDs
           const favoritedItems: GccrItem[] = [];
-          
-          // Get all favorited IDs
           const favoriteIds = Array.from(favorites);
+          console.log('Looking for favorite IDs:', favoriteIds);
           
-          // For now, search for each item individually
-          // This is not the most efficient but will work
+          // Get individual file details using Google Drive API
           for (const itemId of favoriteIds) {
             try {
-              // Try to get the item details - this is a simplified approach
-              // In a real implementation, you might want to cache item metadata
-              const searchResults = await googleDriveService.searchGccr('');
-              const foundItem = searchResults.find(item => item.id === itemId);
-              if (foundItem) {
-                favoritedItems.push({ ...foundItem, isFavorite: true });
+              console.log(`Fetching details for item: ${itemId}`);
+              const item = await googleDriveService.getFileDetails(itemId);
+              if (item) {
+                favoritedItems.push({ ...item, isFavorite: true });
+                console.log(`Found favorited item: ${item.name}`);
               }
             } catch (error) {
               console.warn(`Failed to get details for favorited item ${itemId}:`, error);
             }
           }
 
+          console.log('Final favorited items:', favoritedItems);
           return favoritedItems;
         } catch (error) {
           console.error('Failed to get favorited items:', error);
