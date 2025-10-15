@@ -3,14 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { produce } from 'immer';
-import { 
-  saveConversation, 
-  getUserConversations, 
-  updateConversation, 
-  deleteConversation as deleteFirestoreConversation,
-  subscribeToUserConversations,
-  ChatConversation
-} from '@/lib/firestore';
+import { saveUserData, loadUserData, removeUserData, STORAGE_KEYS } from '@/lib/user-localStorage';
 
 export interface Message {
   role: 'user' | 'assistant';
@@ -36,7 +29,6 @@ export interface Conversation {
   messages: Message[];
   fileContext?: FileContext | null;
   createdAt: Date;
-  firestoreId?: string;
 }
 
 interface AiStudyBuddyState {
@@ -44,7 +36,7 @@ interface AiStudyBuddyState {
   activeConversationId: string | null;
   loading: boolean;
   syncing: boolean;
-  currentUserId: string | null; // Track current user
+  currentUserId: string | null;
   
   // Actions
   createNewConversation: (userId?: string) => Promise<void>;
@@ -57,44 +49,17 @@ interface AiStudyBuddyState {
   clearFileContext: (conversationId: string) => void;
   
   // User management
-  setCurrentUser: (userId: string | null) => void;
+  setCurrentUser: (userId: string | null) => Promise<void>;
   clearUserData: () => void;
-  
-  // Sync methods
-  syncConversations: (userId: string) => Promise<void>;
-  initSync: (userId: string) => () => void;
+  loadUserData: (userId: string) => Promise<void>;
+  syncToLocalStorage: (userId: string) => Promise<void>;
 }
 
 function generateId(): string {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
-function convertFirestoreToLocal(fsConv: ChatConversation): Conversation {
-  return {
-    id: generateId(),
-    firestoreId: fsConv.id,
-    title: fsConv.title,
-    messages: fsConv.messages.map(m => ({
-      role: m.role,
-      content: m.content,
-      timestamp: m.timestamp,
-    })),
-    createdAt: fsConv.createdAt,
-  };
-}
 
-function convertLocalToFirestore(conv: Conversation): Omit<ChatConversation, 'id' | 'userId'> {
-  return {
-    title: conv.title,
-    messages: conv.messages.map(m => ({
-      role: m.role,
-      content: m.content,
-      timestamp: m.timestamp || new Date(),
-    })),
-    createdAt: conv.createdAt,
-    updatedAt: new Date(),
-  };
-}
 
 export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
   persist(
@@ -107,6 +72,10 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
       
       createNewConversation: async (userId?: string) => {
         const effectiveUserId = userId || get().currentUserId;
+        if (!effectiveUserId) {
+          throw new Error('No user ID provided');
+        }
+        
         console.log('Creating new conversation for user:', effectiveUserId);
         
         const newConversation: Conversation = {
@@ -118,7 +87,7 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
         
         console.log('New conversation created:', newConversation);
         
-        // Add to local state first
+        // Add to local state
         set(
           produce((state: AiStudyBuddyState) => {
             console.log('Before update - conversations:', state.conversations.length);
@@ -131,50 +100,21 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
           })
         );
         
-        // Save to Firestore if user is logged in
-        if (effectiveUserId) {
-          try {
-            console.log('Saving conversation to Firestore for user:', effectiveUserId);
-            const firestoreId = await saveConversation(effectiveUserId, convertLocalToFirestore(newConversation));
-            
-            // Update local conversation with Firestore ID
-            set(
-              produce((state: AiStudyBuddyState) => {
-                const conversation = state.conversations.find((c: Conversation) => c.id === newConversation.id);
-                if (conversation) {
-                  conversation.firestoreId = firestoreId;
-                }
-              })
-            );
-            
-            console.log('Conversation saved to Firestore with ID:', firestoreId);
-          } catch (error) {
-            console.error('Failed to save conversation to Firestore:', error);
-            // Don't throw error - let it work offline
-          }
-        }
+        // Save to localStorage
+        const updatedConversations = get().conversations;
+        saveUserData(effectiveUserId, STORAGE_KEYS.AI_CONVERSATIONS, updatedConversations);
         
-        console.log('Conversation creation complete');
+        console.log('[AiStudyBuddyStore] Added conversation to localStorage for user:', effectiveUserId);
       },
       
       deleteConversation: async (conversationId) => {
         console.log('Deleting conversation:', conversationId);
         const conversation = get().conversations.find((c: Conversation) => c.id === conversationId);
+        const { currentUserId } = get();
         
-        if (!conversation) {
-          console.warn('Conversation not found for deletion:', conversationId);
+        if (!conversation || !currentUserId) {
+          console.warn('Conversation not found for deletion or no user:', conversationId);
           return;
-        }
-        
-        // Delete from Firestore if it exists there
-        if (conversation.firestoreId) {
-          try {
-            console.log('Deleting from Firestore:', conversation.firestoreId);
-            await deleteFirestoreConversation(conversation.firestoreId);
-          } catch (error) {
-            console.error('Failed to delete from Firestore:', error);
-            // Don't throw error - still delete locally
-          }
         }
         
         // Remove from local state
@@ -193,7 +133,11 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
           })
         );
         
-        console.log('Conversation deleted successfully');
+        // Save to localStorage
+        const updatedConversations = get().conversations;
+        saveUserData(currentUserId, STORAGE_KEYS.AI_CONVERSATIONS, updatedConversations);
+        
+        console.log('[AiStudyBuddyStore] Deleted conversation from localStorage for user:', currentUserId);
       },
       
       setActiveConversationId: (id) => {
@@ -203,7 +147,10 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
       
       addMessage: async (conversationId, message) => {
         const messageWithTimestamp = { ...message, timestamp: new Date() };
+        const { currentUserId } = get();
         
+        if (!currentUserId) return;
+
         set(
           produce((state: AiStudyBuddyState) => {
             const conversation = state.conversations.find((c: Conversation) => c.id === conversationId);
@@ -213,24 +160,11 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
           })
         );
         
-        // Sync to Firestore
-        const conversation = get().conversations.find((c: Conversation) => c.id === conversationId);
-        if (conversation) {
-          try {
-            if (conversation.firestoreId) {
-              await updateConversation(conversation.firestoreId, {
-                messages: conversation.messages.map(m => ({
-                  role: m.role,
-                  content: m.content,
-                  timestamp: m.timestamp || new Date(),
-                })),
-                updatedAt: new Date(),
-              });
-            }
-          } catch (error) {
-            console.error('Failed to sync message to Firestore:', error);
-          }
-        }
+        // Save to localStorage
+        const updatedConversations = get().conversations;
+        saveUserData(currentUserId, STORAGE_KEYS.AI_CONVERSATIONS, updatedConversations);
+        
+        console.log('[AiStudyBuddyStore] Added message to localStorage for user:', currentUserId);
       },
       
       deleteMessage: (conversationId, messageIndex) => {
@@ -245,6 +179,10 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
       },
       
       updateConversationTitle: async (conversationId, title) => {
+        const { currentUserId } = get();
+        
+        if (!currentUserId) return;
+        
         set(
           produce((state: AiStudyBuddyState) => {
             const conversation = state.conversations.find((c: Conversation) => c.id === conversationId);
@@ -254,15 +192,11 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
           })
         );
         
-        // Sync to Firestore
-        const conversation = get().conversations.find((c: Conversation) => c.id === conversationId);
-        if (conversation?.firestoreId) {
-          try {
-            await updateConversation(conversation.firestoreId, { title });
-          } catch (error) {
-            console.error('Failed to sync title to Firestore:', error);
-          }
-        }
+        // Save to localStorage
+        const updatedConversations = get().conversations;
+        saveUserData(currentUserId, STORAGE_KEYS.AI_CONVERSATIONS, updatedConversations);
+        
+        console.log('[AiStudyBuddyStore] Updated conversation title in localStorage for user:', currentUserId);
       },
       
       setFileContext: (conversationId, fileContext) => {
@@ -287,17 +221,31 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
         );
       },
       
-      setCurrentUser: (userId) => {
+      setCurrentUser: async (userId) => {
         console.log('Setting current user:', userId);
-        set({ currentUserId: userId });
+        const previousUserId = get().currentUserId;
         
-        // Clear conversations when user changes
-        if (!userId) {
+        // If user changed, clear previous user's data and load new user's data
+        if (previousUserId && previousUserId !== userId) {
+          set({ conversations: [], activeConversationId: null, currentUserId: userId });
+        } else {
+          set({ currentUserId: userId });
+        }
+        
+        // Load user data from localStorage
+        if (userId) {
+          await get().loadUserData(userId);
+        } else {
+          // Clear data when logging out
           set({ conversations: [], activeConversationId: null });
         }
       },
       
       clearUserData: () => {
+        const { currentUserId } = get();
+        if (currentUserId) {
+          removeUserData(currentUserId, STORAGE_KEYS.AI_CONVERSATIONS);
+        }
         console.log('Clearing user data');
         set({
           conversations: [],
@@ -308,121 +256,39 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
         });
       },
       
-      syncConversations: async (userId) => {
-        if (!userId) return;
-        
-        console.log('Syncing conversations for user:', userId);
-        set({ loading: true });
-        
+      loadUserData: async (userId) => {
         try {
-          const firestoreConversations = await getUserConversations(userId);
-          console.log('Fetched conversations from Firestore:', firestoreConversations.length);
+          set({ loading: true });
           
-          const currentState = get();
-          const currentConversations = currentState.conversations;
-          const currentActiveId = currentState.activeConversationId;
-          
-          const localConversations = firestoreConversations.map(convertFirestoreToLocal);
-          
-          // Keep local-only conversations (ones without firestoreId) only for the same user
-          const localOnlyConvs = get().currentUserId === userId 
-            ? currentConversations.filter((conv: Conversation) => !conv.firestoreId)
-            : [];
-          
-          const mergedConversations = [...localOnlyConvs, ...localConversations];
-          
-          // Preserve active conversation if it still exists
-          const activeStillExists = mergedConversations.some((conv: Conversation) => conv.id === currentActiveId);
-          const newActiveId = activeStillExists ? currentActiveId : (mergedConversations[0]?.id || null);
-          
-          console.log('Setting conversations:', mergedConversations.length, 'Active ID:', newActiveId);
-          
-          set({
-            conversations: mergedConversations,
-            activeConversationId: newActiveId,
-            loading: false,
+          const conversations = loadUserData(userId, STORAGE_KEYS.AI_CONVERSATIONS, [] as Conversation[]);
+          set({ 
+            conversations, 
+            currentUserId: userId,
+            loading: false 
           });
+          
+          console.log('[AiStudyBuddyStore] Loaded conversations from localStorage for user:', userId, conversations.length);
         } catch (error) {
-          console.error('Failed to sync conversations:', error);
+          console.error('[AiStudyBuddyStore] Failed to load user conversations:', error);
           set({ loading: false });
         }
       },
-      
-      initSync: (userId) => {
-        if (!userId) return () => {};
-        
-        const currentUserId = get().currentUserId;
-        
-        // If user changed, clear old data
-        if (currentUserId && currentUserId !== userId) {
-          console.log('User changed, clearing old conversations');
-          get().clearUserData();
-        }
-        
-        // Set current user
-        get().setCurrentUser(userId);
-        
-        console.log('Initializing sync for user:', userId);
-        
-        // Initial sync
-        get().syncConversations(userId);
-        
-        // Real-time subscription
-        const unsubscribe = subscribeToUserConversations(userId, (firestoreConversations) => {
-          console.log('Received Firestore conversations:', firestoreConversations.length);
-          const currentState = get();
-          const currentConversations = currentState.conversations;
-          const currentActiveId = currentState.activeConversationId;
-          
-          // Convert Firestore conversations to local format
-          const localConversations = firestoreConversations.map(convertFirestoreToLocal);
-          
-          // Keep local-only conversations (ones without firestoreId)
-          const localOnlyConvs = currentConversations.filter((conv: Conversation) => !conv.firestoreId);
-          
-          // Merge conversations
-          const mergedConversations = [...localOnlyConvs, ...localConversations];
-          
-          // Preserve active conversation if it still exists
-          const activeStillExists = mergedConversations.some((conv: Conversation) => conv.id === currentActiveId);
-          const newActiveId = activeStillExists ? currentActiveId : (mergedConversations[0]?.id || null);
-          
-          console.log('Merged conversations:', mergedConversations.length, 'Active ID:', newActiveId);
-          
-          set({
-            conversations: mergedConversations,
-            activeConversationId: newActiveId,
-          });
-        });
-        
-        return unsubscribe;
+
+      syncToLocalStorage: async (userId) => {
+        const { conversations } = get();
+        saveUserData(userId, STORAGE_KEYS.AI_CONVERSATIONS, conversations);
+        console.log('[AiStudyBuddyStore] Synced conversations to localStorage for user:', userId);
       },
     }),
     {
-      name: 'ai-study-buddy-storage',
-      storage: createJSONStorage(() => localStorage),
+      name: 'ai-study-buddy-storage-session',
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
-        // Persist conversations with user association
-        conversations: state.conversations.map(c => ({
-          ...c,
-          fileContext: null, // Don't persist large file data
-        })),
+        // Only persist UI state, not user data
         activeConversationId: state.activeConversationId,
-        currentUserId: state.currentUserId, // Persist current user
+        currentUserId: state.currentUserId,
+        loading: state.loading
       }),
-      // Add version to handle schema changes
-      version: 2,
-      migrate: (persistedState: any, version: number) => {
-        if (version < 2) {
-          // Clear old data on version upgrade to ensure clean state
-          return {
-            conversations: [],
-            activeConversationId: null,
-            currentUserId: null,
-          };
-        }
-        return persistedState;
-      },
     }
   )
 );

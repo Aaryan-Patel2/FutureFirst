@@ -1,78 +1,240 @@
-
 'use client';
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { addDays, startOfDay } from 'date-fns';
-import { produce } from 'immer';
-
-const today = startOfDay(new Date());
+import { persist, subscribeWithSelector } from 'zustand/middleware';
+import { saveUserData, loadUserData, removeUserData, STORAGE_KEYS } from '@/lib/user-localStorage';
 
 export interface Task {
   id: string;
-  label: string;
-  done: boolean;
-  category: string;
+  title: string;
+  description: string;
   dueDate: Date;
+  done: boolean;
+  priority: 'low' | 'medium' | 'high';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface ProgressState {
+  // User management
+  currentUserId: string | null;
+  
+  // Tasks
   tasks: Task[];
-  addTask: (newTask: Omit<Task, 'id' | 'done'>) => void;
-  toggleTask: (taskId: string) => void;
-  deleteTask: (taskId: string) => void;
+  completedTasksCount: number;
+  totalTasksCount: number;
+  
+  // Statistics
+  weeklyProgress: number;
+  monthlyProgress: number;
+  
+  // Actions
+  setCurrentUser: (userId: string) => Promise<void>;
+  clearUserData: () => void;
+  
+  // Task management
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateTask: (id: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  toggleTask: (id: string) => Promise<void>;
+  
+  // Sync
+  syncToLocalStorage: (userId: string) => Promise<void>;
+  loadUserData: (userId: string) => Promise<void>;
 }
 
-const initialTasks: Task[] = [
-  { id: 'task1', label: 'Complete Marketing Chapter 1', done: true, category: 'Marketing', dueDate: today },
-  { id: 'task2', label: 'Practice Impromptu Speech (5 mins)', done: false, category: 'Public Speaking', dueDate: addDays(today, 2) },
-  { id: 'task3', label: 'Review Business Law Case Studies', done: false, category: 'Business Law', dueDate: addDays(today, 5) },
-  { id: 'task4', label: 'Draft Business Plan Executive Summary', done: true, category: 'Business Plan', dueDate: addDays(today, 8) },
-  { id: 'task5', label: 'Take practice test for Accounting I', done: false, category: 'Accounting', dueDate: addDays(today, 12) },
-  { id: 'task6', label: 'Research 2024 NLC location', done: true, category: 'General', dueDate: addDays(today, 15) },
-  { id: 'task7', label: 'Update Career Portfolio', done: false, category: 'Presentation', dueDate: addDays(today, 6) },
-];
-
-
 export const useProgressStore = create<ProgressState>()(
-  persist(
-    (set) => ({
-      tasks: initialTasks,
-      addTask: (newTask) => {
-        set(produce((state: ProgressState) => {
-            const taskToAdd: Task = {
-                ...newTask,
-                id: `task${Date.now()}`,
-                done: false,
+  subscribeWithSelector(
+    persist(
+      (set, get) => ({
+        // Initial state
+        currentUserId: null,
+        tasks: [],
+        completedTasksCount: 0,
+        totalTasksCount: 0,
+        weeklyProgress: 0,
+        monthlyProgress: 0,
+
+        // Set current user and load their data
+        setCurrentUser: async (userId: string) => {
+          if (get().currentUserId === userId) return;
+          
+          console.log('[ProgressStore] Setting current user:', userId);
+          set({ currentUserId: userId });
+          await get().loadUserData(userId);
+        },
+
+        // Clear all user data
+        clearUserData: () => {
+          const { currentUserId } = get();
+          if (currentUserId) {
+            removeUserData(currentUserId, STORAGE_KEYS.PROGRESS_TASKS);
+          }
+          console.log('[ProgressStore] Clearing user data');
+          set({
+            currentUserId: null,
+            tasks: [],
+            completedTasksCount: 0,
+            totalTasksCount: 0,
+            weeklyProgress: 0,
+            monthlyProgress: 0,
+          });
+        },
+
+        // Add a new task
+        addTask: async (taskData) => {
+          const { currentUserId } = get();
+          if (!currentUserId) return;
+
+          const newTask: Task = {
+            ...taskData,
+            id: Date.now().toString(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+
+          set((state) => {
+            const newTasks = [...state.tasks, newTask];
+            const completed = newTasks.filter(t => t.done).length;
+            
+            return {
+              tasks: newTasks,
+              completedTasksCount: completed,
+              totalTasksCount: newTasks.length,
             };
-            state.tasks.push(taskToAdd);
-        }));
-      },
-      toggleTask: (taskId) => {
-        set(produce((state: ProgressState) => {
-            const task = state.tasks.find(t => t.id === taskId);
-            if (task) {
-                task.done = !task.done;
-            }
-        }));
-      },
-      deleteTask: (taskId) => {
-        set(produce((state: ProgressState) => {
-            state.tasks = state.tasks.filter(t => t.id !== taskId);
-        }));
-      },
-    }),
-    {
-      name: 'progress-storage',
-      storage: createJSONStorage(() => localStorage, {
-        // Zod objects with functions can't be stored directly. We need to serialize/deserialize
-        reviver: (key, value: any) => {
-            if (key === 'tasks') {
-                return value.map((task: any) => ({ ...task, dueDate: new Date(task.dueDate) }));
-            }
-            return value;
+          });
+
+          // Save to localStorage
+          await get().syncToLocalStorage(currentUserId);
+        },
+
+        // Update an existing task
+        updateTask: async (id, updates) => {
+          const { currentUserId } = get();
+          if (!currentUserId) return;
+
+          set((state) => {
+            const newTasks = state.tasks.map(task =>
+              task.id === id 
+                ? { ...task, ...updates, updatedAt: new Date() }
+                : task
+            );
+            const completed = newTasks.filter(t => t.done).length;
+            
+            return {
+              tasks: newTasks,
+              completedTasksCount: completed,
+              totalTasksCount: newTasks.length,
+            };
+          });
+
+          // Save to localStorage
+          await get().syncToLocalStorage(currentUserId);
+        },
+
+        // Delete a task
+        deleteTask: async (id) => {
+          const { currentUserId } = get();
+          if (!currentUserId) return;
+
+          set((state) => {
+            const newTasks = state.tasks.filter(task => task.id !== id);
+            const completed = newTasks.filter(t => t.done).length;
+            
+            return {
+              tasks: newTasks,
+              completedTasksCount: completed,
+              totalTasksCount: newTasks.length,
+            };
+          });
+
+          // Save to localStorage
+          await get().syncToLocalStorage(currentUserId);
+        },
+
+        // Toggle task completion
+        toggleTask: async (id) => {
+          const { currentUserId } = get();
+          if (!currentUserId) return;
+
+          set((state) => {
+            const newTasks = state.tasks.map(task =>
+              task.id === id 
+                ? { ...task, done: !task.done, updatedAt: new Date() }
+                : task
+            );
+            const completed = newTasks.filter(t => t.done).length;
+            
+            return {
+              tasks: newTasks,
+              completedTasksCount: completed,
+              totalTasksCount: newTasks.length,
+            };
+          });
+
+          // Save to localStorage
+          await get().syncToLocalStorage(currentUserId);
+        },
+
+        // Sync current state to localStorage
+        syncToLocalStorage: async (userId: string) => {
+          try {
+            const { tasks } = get();
+            saveUserData(userId, STORAGE_KEYS.PROGRESS_TASKS, tasks);
+            console.log('[ProgressStore] Synced to localStorage for user:', userId);
+          } catch (error) {
+            console.error('[ProgressStore] Failed to sync to localStorage:', error);
+          }
+        },
+
+        // Load user data from localStorage
+        loadUserData: async (userId: string) => {
+          try {
+            console.log('[ProgressStore] Loading user data for:', userId);
+            
+            const tasks = loadUserData(userId, STORAGE_KEYS.PROGRESS_TASKS, [] as Task[]);
+            const completed = tasks.filter((t: Task) => t.done).length;
+            
+            // Calculate progress statistics
+            const now = new Date();
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            
+            const weeklyCompleted = tasks.filter((t: Task) => 
+              t.done && new Date(t.updatedAt) >= weekAgo
+            ).length;
+            const monthlyCompleted = tasks.filter((t: Task) => 
+              t.done && new Date(t.updatedAt) >= monthAgo
+            ).length;
+            
+            set({
+              tasks,
+              completedTasksCount: completed,
+              totalTasksCount: tasks.length,
+              weeklyProgress: weeklyCompleted,
+              monthlyProgress: monthlyCompleted,
+            });
+            
+            console.log('[ProgressStore] Loaded tasks for user:', userId, tasks.length);
+          } catch (error) {
+            console.error('[ProgressStore] Failed to load user data:', error);
+            set({
+              tasks: [],
+              completedTasksCount: 0,
+              totalTasksCount: 0,
+              weeklyProgress: 0,
+              monthlyProgress: 0,
+            });
+          }
         },
       }),
-    }
+      {
+        name: 'progress-storage',
+        // Only persist non-user-specific UI state
+        partialize: (state) => ({
+          // Don't persist user-specific data
+        }),
+      }
+    )
   )
 );

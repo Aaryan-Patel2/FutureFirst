@@ -9,6 +9,7 @@ import { useUserStore } from '@/store/user-store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/logo';
 import { testFirebaseConnection } from '@/lib/firebase-test';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function LoginPage() {
   const { user, initAuthListener, loading } = useUserStore();
@@ -55,11 +56,69 @@ export default function LoginPage() {
 
   if (user) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6">
-        <p className="text-muted-foreground">You're signed in as {user.email}.</p>
-        <Button asChild className="animated-button">
-          <Link href="/dashboard">Go to Dashboard</Link>
-        </Button>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+        
+        <Card className="w-full max-w-lg shadow-2xl bg-card/80 backdrop-blur-sm border-border">
+          <CardContent className="p-8">
+            <div className="text-center space-y-6">
+              {/* Success Icon */}
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-blue-600/20 border border-cyan-400/30">
+                <svg className="h-10 w-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              {/* Welcome Message */}
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight">
+                  Welcome back!
+                </h1>
+                <p className="text-lg text-muted-foreground">
+                  You're successfully signed in
+                </p>
+              </div>
+              
+              {/* User Info */}
+              <div className="space-y-4 p-6 rounded-lg bg-secondary/30 border border-border/50">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-16 w-16 rounded-full bg-gradient-to-r from-cyan-500 via-purple-500 to-blue-600 p-0.5">
+                    <Avatar className="h-full w-full">
+                      <AvatarImage src={user.profilePictureUrl} alt={user.name} />
+                      <AvatarFallback className="text-2xl font-bold gradient-text bg-background">
+                        {user.name?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="text-center space-y-1">
+                    <p className="text-xl font-semibold text-foreground">
+                      {user.name || 'Student'}
+                    </p>
+                    <p className="text-sm text-muted-foreground font-mono">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Action Button */}
+              <div className="pt-4">
+                <Button asChild className="animated-button w-full" size="lg">
+                  <Link href="/dashboard">
+                    Continue to Dashboard
+                    <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <footer className="mt-8 text-center text-xs text-muted-foreground">
+          &copy; {new Date().getFullYear()} FutureFirst. All rights reserved.
+        </footer>
       </div>
     );
   }

@@ -80,17 +80,24 @@ export default function DashboardHomePage() {
   const { tasks } = useProgressStore();
   const [isChartOpen, setIsChartOpen] = useState(true);
 
-  const isSameDay = (date1: Date, date2: Date) =>
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate();
+  const isSameDay = (date1: Date | string, date2: Date) => {
+    const d1 = date1 instanceof Date ? date1 : new Date(date1);
+    const d2 = date2 instanceof Date ? date2 : new Date(date2);
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getDate() === d2.getDate();
+  };
 
   const weeklyChartData = useMemo(() => {
     const today = startOfDay(new Date());
     const data = [];
     for (let i = 0; i < 7; i++) {
       const day = addDays(today, i);
-      const dayTasks = tasks.filter(task => isSameDay(task.dueDate, day));
+      const dayTasks = tasks.filter(task => {
+        // Ensure task.dueDate is converted to Date object
+        const taskDate = task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
+        return isSameDay(taskDate, day);
+      });
       data.push({
         date: format(day, 'EEE'),
         Done: dayTasks.filter(t => t.done).length,

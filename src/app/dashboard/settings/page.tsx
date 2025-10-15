@@ -12,9 +12,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { User, KeyRound, Bell, Image as ImageIcon } from 'lucide-react';
+import { User, KeyRound, Bell, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { auth } from '@/lib/firebase';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50, { message: 'Name cannot be longer than 50 characters.' }),
@@ -63,7 +64,10 @@ export default function SettingsPage() {
       const reader = new FileReader();
       reader.onloadend = async () => {
         try {
-          await updateProfile({ profilePictureUrl: reader.result as string });
+          await updateProfile({ 
+            profilePictureUrl: reader.result as string,
+            hasCustomProfilePicture: true // Mark as custom when user uploads their own picture
+          });
           toast({
             title: 'Avatar Updated',
             description: 'Your new profile picture has been set.',
@@ -77,6 +81,34 @@ export default function SettingsPage() {
         }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleResetToGooglePhoto = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser?.photoURL) {
+        await updateProfile({ 
+          profilePictureUrl: currentUser.photoURL,
+          hasCustomProfilePicture: false // Mark as Google photo
+        });
+        toast({
+          title: 'Profile Picture Reset',
+          description: 'Your profile picture has been reset to your Google account photo.',
+        });
+      } else {
+        toast({
+          title: 'No Google Photo Available',
+          description: 'Your Google account does not have a profile picture set.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Reset Failed',
+        description: 'Failed to reset your profile picture. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -112,9 +144,31 @@ export default function SettingsPage() {
                 className="hidden"
                 accept="image/png, image/jpeg, image/gif"
               />
-              <div>
+              <div className="flex-1">
                 <h3 className="text-xl font-semibold">{user?.name}</h3>
                 <p className="text-muted-foreground">{user?.email}</p>
+                <div className="flex gap-2 mt-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleAvatarClick}
+                    className="text-sm"
+                  >
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    Upload Photo
+                  </Button>
+                  {user?.hasCustomProfilePicture && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleResetToGooglePhoto}
+                      className="text-sm"
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Use Google Photo
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 

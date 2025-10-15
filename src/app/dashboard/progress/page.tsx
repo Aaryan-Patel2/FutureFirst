@@ -50,9 +50,11 @@ export default function ProgressPlanPage() {
   const handleAddTask = () => {
     if (taskName && taskCategory && taskDueDate) {
         addTask({
-            label: taskName,
-            category: taskCategory,
+            title: taskName,
+            description: taskCategory,
             dueDate: startOfDay(taskDueDate),
+            done: false,
+            priority: 'medium',
         });
         // Reset form and close dialog
         setTaskName('');
@@ -63,20 +65,33 @@ export default function ProgressPlanPage() {
   };
 
   const filteredTasks = useMemo(() => {
-    let sortedTasks = [...tasks].sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+    let sortedTasks = [...tasks].sort((a, b) => {
+      const dateA = a.dueDate instanceof Date ? a.dueDate : new Date(a.dueDate);
+      const dateB = b.dueDate instanceof Date ? b.dueDate : new Date(b.dueDate);
+      return dateA.getTime() - dateB.getTime();
+    });
 
     if (selectedDate) {
-      return sortedTasks.filter(task => isSameDay(task.dueDate, selectedDate));
+      return sortedTasks.filter(task => {
+        const taskDate = task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
+        return isSameDay(taskDate, selectedDate);
+      });
     }
     
     const now = today;
     if (activeTab === '7days') {
       const next7Days = { start: now, end: addDays(now, 7) };
-      return sortedTasks.filter(task => isWithinInterval(task.dueDate, next7Days));
+      return sortedTasks.filter(task => {
+        const taskDate = task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
+        return isWithinInterval(taskDate, next7Days);
+      });
     }
     if (activeTab === '14days') {
       const next14Days = { start: now, end: addDays(now, 14) };
-      return sortedTasks.filter(task => isWithinInterval(task.dueDate, next14Days));
+      return sortedTasks.filter(task => {
+        const taskDate = task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
+        return isWithinInterval(taskDate, next14Days);
+      });
     }
     
     return sortedTasks; // 'all' tab
@@ -141,9 +156,9 @@ export default function ProgressPlanPage() {
                         htmlFor={task.id}
                         className={`flex-1 text-sm font-medium leading-none ${task.done ? 'line-through text-muted-foreground' : ''}`}
                     >
-                        {task.label}
+                        {task.title}
                     </label>
-                    <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">{task.category}</div>
+                    <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">{task.description}</div>
                     <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100" onClick={() => deleteTask(task.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
