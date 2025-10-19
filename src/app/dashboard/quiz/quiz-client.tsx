@@ -11,8 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { competitionQuiz, CompetitionQuizOutput } from '@/ai/flows/competition-quiz';
-import { sendQuizResultsEmail } from '@/ai/flows/send-quiz-results-email';
-import { Loader2, Lightbulb, Star, Send, Share2, GripVertical, CheckCircle, Tags, BrainCircuit, X, Home } from 'lucide-react';
+import { Loader2, Lightbulb, Star, GripVertical, CheckCircle, Tags, BrainCircuit, X, Home } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ToastAction } from '@/components/ui/toast';
@@ -38,7 +37,6 @@ type FormData = {
 
 export function QuizClient() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [results, setResults] = useState<CompetitionQuizOutput | null>(null);
   const [rankedRecommendations, setRankedRecommendations] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
@@ -116,30 +114,6 @@ export function QuizClient() {
       const currentData = form.getValues();
       const finalTags = tags.join(' ');
       onSubmit({ ...currentData, recommendationCount: refineCount }, finalTags);
-  };
-
-  const handleSendEmail = async () => {
-    setIsSendingEmail(true);
-    try {
-        await sendQuizResultsEmail({
-            studentName: 'Student', // Replace with actual student name
-            rankedCompetitions: rankedRecommendations
-        });
-        toast({
-            title: "Email Sent!",
-            description: "Your competition list has been sent to Ms. Herbert.",
-            action: <ToastAction altText="Close"><CheckCircle className="text-green-500" /></ToastAction>
-        });
-    } catch(e) {
-        console.error("Failed to send email", e);
-        toast({
-            variant: 'destructive',
-            title: 'Email Failed',
-            description: 'There was a problem sending your results. Please try again later.'
-        });
-    } finally {
-        setIsSendingEmail(false);
-    }
   };
 
   const handleReturnToDashboard = () => {
@@ -275,32 +249,6 @@ export function QuizClient() {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
-
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button className='animated-button'><Share2 className="mr-2"/> Share with Ms. Herbert</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm Your Ranked List</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            You are about to send the following ranked list of competitions to Ms. Herbert. Please review it before sending.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <div className="my-4">
-                            <ol className="list-decimal list-inside space-y-1 rounded-md border p-4 bg-background">
-                                {rankedRecommendations.map(rec => <li key={rec}>{rec}</li>)}
-                            </ol>
-                        </div>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleSendEmail} disabled={isSendingEmail} className="animated-button">
-                            {isSendingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                            Confirm & Send
-                        </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
             </div>
         </CardFooter>
       </Card>
@@ -420,7 +368,7 @@ export function QuizClient() {
             {isLoading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-                <Send className="mr-2 h-4 w-4" />
+                <Lightbulb className="mr-2 h-4 w-4" />
             )}
             Get My Recommendations
             </Button>
