@@ -26,12 +26,15 @@ import {
   Settings,
   ChevronDown,
   LineChart,
+  Zap,
+  TrendingUp,
 } from 'lucide-react';
 import { useNotesStore } from '@/store/notes-store';
 import { useGccrStore } from '@/store/gccr-store';
 import { useQuizStore } from '@/store/quiz-store';
 import { useUserStore } from '@/store/user-store';
 import { useProgressStore } from '@/store/progress-store';
+import { useActivityStore } from '@/store/activity-store';
 import { useMemo, useState, useEffect } from 'react';
 import { isWithinInterval, startOfDay, addDays, format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -78,6 +81,7 @@ export default function DashboardHomePage() {
 
   const { selectedCompetitions } = useQuizStore();
   const { tasks } = useProgressStore();
+  const { getWeeklyActivityData, totalPoints } = useActivityStore();
   const [isChartOpen, setIsChartOpen] = useState(true);
 
   const isSameDay = (date1: Date | string, date2: Date) => {
@@ -89,27 +93,17 @@ export default function DashboardHomePage() {
   };
 
   const weeklyChartData = useMemo(() => {
-    const today = startOfDay(new Date());
-    const data = [];
-    for (let i = 0; i < 7; i++) {
-      const day = addDays(today, i);
-      const dayTasks = tasks.filter(task => {
-        // Ensure task.dueDate is converted to Date object
-        const taskDate = task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
-        return isSameDay(taskDate, day);
-      });
-      data.push({
-        date: format(day, 'EEE'),
-        Done: dayTasks.filter(t => t.done).length,
-        Pending: dayTasks.filter(t => !t.done).length,
-      });
-    }
-    return data;
-  }, [tasks]);
+    const activityData = getWeeklyActivityData();
+    return activityData.map(day => ({
+      date: day.day,
+      Points: day.points,
+      Activities: day.activityCount,
+    }));
+  }, [getWeeklyActivityData]);
 
   const chartConfig = {
-    Done: { label: 'Done', color: 'hsl(var(--accent))' },
-    Pending: { label: 'Pending', color: 'hsl(var(--secondary))' },
+    Points: { label: 'Activity Points', color: 'hsl(var(--accent))' },
+    Activities: { label: 'Activity Count', color: 'hsl(180 80% 70%)' },
   };
 
   return (
@@ -129,25 +123,50 @@ export default function DashboardHomePage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
         {/* Left Column */}
         <div className="space-y-6 lg:col-span-2">
-          {/* Progress Plan */}
+          {/* Activity Progress */}
            <Card className="hover:border-cyan-400/50 transition-all">
             <Collapsible open={isChartOpen} onOpenChange={setIsChartOpen}>
               <CollapsibleTrigger asChild>
                 <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
-                  <div>
-                    <CardTitle>Your Weekly Progress</CardTitle>
+                  <div className="flex-1">
+                    <CardTitle className="flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-cyan-400" />
+                      Your Weekly Activity
+                    </CardTitle>
                     <CardDescription>
-                      A look at your tasks for the next 7 days.
+                      Track your engagement and earn activity points.
                     </CardDescription>
                   </div>
-                  <Button variant="ghost" size="icon">
-                    <LineChart className="h-5 w-5 mr-2" />
-                    <ChevronDown className={`h-4 w-4 transition-transform ${isChartOpen ? 'rotate-180' : ''}`} />
-                  </Button>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-3xl font-bold gradient-text flex items-center gap-1">
+                        <Trophy className="h-6 w-6 text-yellow-400" />
+                        {totalPoints}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Total Points</div>
+                    </div>
+                    <Button variant="ghost" size="icon">
+                      <ChevronDown className={`h-4 w-4 transition-transform ${isChartOpen ? 'rotate-180' : ''}`} />
+                    </Button>
+                  </div>
                 </CardHeader>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <CardContent>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-secondary/50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-cyan-400">
+                        {weeklyChartData.reduce((sum, day) => sum + day.Points, 0)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Points This Week</div>
+                    </div>
+                    <div className="bg-secondary/50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-cyan-400">
+                        {weeklyChartData.reduce((sum, day) => sum + day.Activities, 0)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Activities This Week</div>
+                    </div>
+                  </div>
                    <ChartContainer config={chartConfig} className="h-64">
                     <BarChart accessibilityLayer data={weeklyChartData}>
                       <CartesianGrid vertical={false} />
@@ -168,15 +187,20 @@ export default function DashboardHomePage() {
                         cursor={false}
                         content={<ChartTooltipContent indicator="dot" />}
                       />
-                      <Bar dataKey="Pending" fill="var(--color-Pending)" radius={4} />
-                      <Bar dataKey="Done" fill="var(--color-Done)" radius={4} />
+                      <Bar dataKey="Points" fill="var(--color-Points)" radius={4} />
                     </BarChart>
                   </ChartContainer>
-                  <Button asChild variant="link" className="px-0 mt-2 text-cyan-400">
-                    <Link href="/dashboard/progress">
-                      Go to Full Progress Plan <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      <TrendingUp className="inline h-4 w-4 text-green-400 mr-1" />
+                      Keep up the great work!
+                    </div>
+                    <Button asChild variant="link" className="px-0 text-cyan-400">
+                      <Link href="/dashboard/progress">
+                        View Progress Details <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
                 </CardContent>
               </CollapsibleContent>
             </Collapsible>

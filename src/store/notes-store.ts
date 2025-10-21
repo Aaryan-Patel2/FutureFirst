@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { saveUserData, loadUserData, removeUserData, STORAGE_KEYS } from '@/lib/user-localStorage';
+import { useActivityStore } from './activity-store';
 
 export interface NoteFile {
   name: string;
@@ -56,6 +57,10 @@ export const useNotesStore = create<NotesState>()(
 
         set((state) => ({ notes: [...state.notes, newNote] }));
         
+        // Log activity
+        const activityStore = useActivityStore.getState();
+        await activityStore.logActivity('NOTE_CREATED', { noteName: newNote.title });
+        
         // Save to localStorage
         const updatedNotes = [...get().notes];
         saveUserData(effectiveUserId, STORAGE_KEYS.NOTES, updatedNotes);
@@ -75,6 +80,15 @@ export const useNotesStore = create<NotesState>()(
               : note
           ),
         }));
+
+        // Log activity (only if content or title changed, not just favorites)
+        if (updates.content !== undefined || updates.title !== undefined) {
+          const note = get().notes.find(n => n.id === id);
+          if (note) {
+            const activityStore = useActivityStore.getState();
+            await activityStore.logActivity('NOTE_EDITED', { noteName: note.title });
+          }
+        }
 
         // Save to localStorage
         const updatedNotes = get().notes;

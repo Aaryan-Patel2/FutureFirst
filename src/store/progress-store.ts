@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist, subscribeWithSelector } from 'zustand/middleware';
 import { saveUserData, loadUserData, removeUserData, STORAGE_KEYS } from '@/lib/user-localStorage';
+import { useActivityStore } from './activity-store';
 
 export interface Task {
   id: string;
@@ -104,6 +105,10 @@ export const useProgressStore = create<ProgressState>()(
             };
           });
 
+          // Log activity
+          const activityStore = useActivityStore.getState();
+          await activityStore.logActivity('TASK_CREATED', { taskTitle: newTask.title });
+
           // Save to localStorage
           await get().syncToLocalStorage(currentUserId);
         },
@@ -154,8 +159,11 @@ export const useProgressStore = create<ProgressState>()(
 
         // Toggle task completion
         toggleTask: async (id) => {
-          const { currentUserId } = get();
+          const { currentUserId, tasks } = get();
           if (!currentUserId) return;
+
+          const task = tasks.find(t => t.id === id);
+          const wasCompleted = task?.done || false;
 
           set((state) => {
             const newTasks = state.tasks.map(task =>
@@ -171,6 +179,12 @@ export const useProgressStore = create<ProgressState>()(
               totalTasksCount: newTasks.length,
             };
           });
+
+          // Log activity only when completing a task (not uncompleting)
+          if (!wasCompleted && task) {
+            const activityStore = useActivityStore.getState();
+            await activityStore.logActivity('TASK_COMPLETED', { taskTitle: task.title });
+          }
 
           // Save to localStorage
           await get().syncToLocalStorage(currentUserId);

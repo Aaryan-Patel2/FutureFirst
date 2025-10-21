@@ -16,6 +16,7 @@ import { Slider } from '@/components/ui/slider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ToastAction } from '@/components/ui/toast';
 import { useQuizStore } from '@/store/quiz-store';
+import { useActivityStore } from '@/store/activity-store';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -45,6 +46,7 @@ export function QuizClient() {
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   const { toast } = useToast();
   const { setCompetitions } = useQuizStore();
+  const { logActivity } = useActivityStore();
   const router = useRouter();
 
   const form = useForm<FormData>({
@@ -84,6 +86,9 @@ export function QuizClient() {
       setRankedRecommendations(result.recommendations);
       setCompetitions(result.recommendations); // Save to store
       setRefineCount(recommendationCount); // Set refine count for dialog
+      
+      // Log activity
+      await logActivity('QUIZ_TAKEN');
     } catch (error) {
       console.error('Quiz submission error:', error);
       toast({

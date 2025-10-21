@@ -15,7 +15,8 @@ export const STORAGE_KEYS = {
   AI_CONVERSATIONS: 'ai_conversations', 
   GCCR_FAVORITES: 'gccr_favorites',
   PROGRESS_TASKS: 'progress_tasks',
-  USER_PROFILE: 'user_profile'
+  USER_PROFILE: 'user_profile',
+  ACTIVITY_LOG: 'activity_log'
 } as const;
 
 /**

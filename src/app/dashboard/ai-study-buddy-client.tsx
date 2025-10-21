@@ -18,8 +18,7 @@ import { useGccrStore } from '@/store/gccr-store';
 import { useNotesStore } from '@/store/notes-store';
 import { GoogleDriveService } from '@/lib/google-drive-service';
 import { cn } from '@/lib/utils';
-import { Paperclip, Send, Trash2, FileText, BookOpen, Trophy, X, Plus } from 'lucide-react';
-import { SammyLogo } from '@/components/sammy-logo';
+import { Paperclip, Send, Trash2, FileText, BookOpen, Trophy, X, Plus, Bot } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -738,7 +737,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
         <div className="space-y-4">
           {effectiveConversation.messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
-              <SammyLogo className="h-16 w-16 mx-auto mb-4 text-cyan-400" />
+              <Bot className="h-16 w-16 mx-auto mb-4 text-cyan-400" />
               <p>Start a conversation with your AI study buddy!</p>
               <p className="text-sm mt-2">Upload files or ask questions to get started.</p>
             </div>
@@ -747,7 +746,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
               <div key={index} className={cn('flex items-start gap-4', message.role === 'user' ? 'justify-end' : 'justify-start')}>
                 {message.role === 'assistant' && (
                   <Avatar className="h-9 w-9 bg-secondary text-foreground flex items-center justify-center shrink-0 border border-border">
-                    <SammyLogo className="h-6 w-6 text-cyan-400" />
+                    <Bot className="h-6 w-6 text-cyan-400" />
                   </Avatar>
                 )}
                 <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-3', message.role === 'user' ? 'bg-secondary text-secondary-foreground' : 'bg-card text-card-foreground')}>

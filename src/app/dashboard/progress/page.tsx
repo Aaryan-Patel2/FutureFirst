@@ -26,6 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProgressStore, Task } from '@/store/progress-store';
+import { ActivityPointsGuide } from '@/components/activity-points-guide';
 
 const today = startOfDay(new Date());
 
@@ -263,6 +264,9 @@ export default function ProgressPlanPage() {
                 </Dialog>
           </CardHeader>
         </Card>
+        
+        {/* Activity Points Guide */}
+        <ActivityPointsGuide />
       </div>
     </div>
   );

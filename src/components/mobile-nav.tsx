@@ -4,12 +4,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { FolderGit2, Book, CalendarCheck, ClipboardList, Home, Gift } from 'lucide-react';
-import { SammyLogo } from './sammy-logo';
+import { FolderGit2, Book, CalendarCheck, ClipboardList, Home, Gift, Bot } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: Home },
-  { href: '/dashboard/ai-study-buddy', label: 'Sammy AI', icon: SammyLogo },
+  { href: '/dashboard/ai-study-buddy', label: 'Sammy AI', icon: Bot },
   { href: '/dashboard/gccr', label: 'GCCR', icon: FolderGit2 },
   { href: '/dashboard/notebook', label: 'Notes', icon: Book },
   { href: '/dashboard/quiz', label: 'Quiz', icon: ClipboardList },

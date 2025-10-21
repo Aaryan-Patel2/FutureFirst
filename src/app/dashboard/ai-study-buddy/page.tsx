@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { SammyLogo } from '@/components/sammy-logo';
+import { Bot } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function AiStudyBuddyPage() {
@@ -80,7 +80,7 @@ export default function AiStudyBuddyPage() {
       <aside className="hidden md:flex flex-col border-r bg-background w-64 lg:w-72 xl:w-80 shrink-0">
         <div className="flex items-center justify-between gap-2 px-3 py-2 border-b">
           <div className="flex items-center gap-2">
-            <SammyLogo className="h-6 w-6 text-cyan-400" />
+            <Bot className="h-6 w-6 text-cyan-400" />
             <h2 className="text-base font-semibold tracking-tight">Conversations</h2>
           </div>
           <Button 

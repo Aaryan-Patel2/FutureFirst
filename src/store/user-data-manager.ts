@@ -7,6 +7,7 @@ import { useNotesStore } from './notes-store';
 import { useGccrStore } from './gccr-store';
 import { useProgressStore } from './progress-store';
 import { useAiStudyBuddyStore } from './ai-study-buddy-store';
+import { useActivityStore } from './activity-store';
 
 export class UserDataManager {
   private static instance: UserDataManager;
@@ -37,6 +38,7 @@ export class UserDataManager {
       const gccrStore = useGccrStore.getState();
       const progressStore = useProgressStore.getState();
       const aiStore = useAiStudyBuddyStore.getState();
+      const activityStore = useActivityStore.getState();
 
       // Clear any previous user's data and set new user
       await quizStore.setCurrentUser(userId);
@@ -44,6 +46,7 @@ export class UserDataManager {
       await gccrStore.setCurrentUser(userId);
       await progressStore.setCurrentUser(userId);
       await aiStore.setCurrentUser(userId);
+      await activityStore.setCurrentUser(userId);
       // Note: userStore manages itself through Firebase Auth listener
       
       this.currentUserId = userId;
@@ -66,6 +69,7 @@ export class UserDataManager {
       const gccrStore = useGccrStore.getState();
       const progressStore = useProgressStore.getState();
       const aiStore = useAiStudyBuddyStore.getState();
+      const activityStore = useActivityStore.getState();
 
       // Clear all stores
       userStore.clearUserData(this.currentUserId || undefined);
@@ -74,6 +78,7 @@ export class UserDataManager {
       gccrStore.clearUserData();
       progressStore.clearUserData();
       aiStore.clearUserData();
+      activityStore.clearUserData();
       
       this.currentUserId = null;
       this.isInitialized = false;
@@ -95,6 +100,7 @@ export class UserDataManager {
       const gccrStore = useGccrStore.getState();
       const progressStore = useProgressStore.getState();
       const aiStore = useAiStudyBuddyStore.getState();
+      const activityStore = useActivityStore.getState();
 
       // Sync all stores to localStorage
       await Promise.all([
@@ -104,6 +110,7 @@ export class UserDataManager {
         gccrStore.syncFavoritesToLocalStorage(userId),
         progressStore.syncToLocalStorage(userId),
         aiStore.syncToLocalStorage(userId),
+        activityStore.syncToLocalStorage(userId),
       ]);
       
       console.log('Successfully synced all stores to localStorage');

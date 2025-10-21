@@ -68,7 +68,7 @@ export default function DashboardLayout({
     <div className="min-h-screen w-full bg-background text-foreground">
       {isMobile ? <MobileNav /> : <DesktopSidebar />}
 
-      <div className={`flex flex-col ${isMobile ? 'pb-16' : 'md:pl-64'}`}>
+      <div className={`flex flex-col ${isMobile ? 'pb-16' : ''}`} style={isMobile ? {} : { marginLeft: 'var(--sidebar-width, 256px)' }}>
         <DashboardHeader />
         <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
       </div>
