@@ -68,10 +68,9 @@ export const useProgressStore = create<ProgressState>()(
         // Clear all user data
         clearUserData: () => {
           const { currentUserId } = get();
-          if (currentUserId) {
-            removeUserData(currentUserId, STORAGE_KEYS.PROGRESS_TASKS);
-          }
-          console.log('[ProgressStore] Clearing user data');
+          // Note: We DON'T remove from localStorage - we want data to persist across sessions
+          // Only clear the in-memory state
+          console.log('[ProgressStore] Clearing in-memory state for user:', currentUserId);
           set({
             currentUserId: null,
             tasks: [],

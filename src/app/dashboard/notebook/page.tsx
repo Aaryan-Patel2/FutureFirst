@@ -140,11 +140,11 @@ export default function NotebookPage() {
         <ScrollArea className="flex-1">
           <CardContent className="p-0">
             {notes.map(note => (
-              <button
+              <div
                 key={note.id}
                 onClick={() => handleSelectNote(note)}
                 className={cn(
-                  'w-full text-left p-4 border-b hover:bg-secondary transition-colors',
+                  'w-full text-left p-4 border-b hover:bg-secondary transition-colors cursor-pointer',
                   activeNote?.id === note.id && 'bg-secondary'
                 )}
               >
@@ -170,7 +170,7 @@ export default function NotebookPage() {
                     />
                   </button>
                 </div>
-              </button>
+              </div>
             ))}
           </CardContent>
         </ScrollArea>

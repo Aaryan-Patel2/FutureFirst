@@ -51,9 +51,9 @@ export const useQuizStore = create<QuizState>()(
       
       clearUserData: () => {
         const { currentUserId } = get();
-        if (currentUserId) {
-          removeUserData(currentUserId, STORAGE_KEYS.QUIZ_COMPETITIONS);
-        }
+        // Note: We DON'T remove from localStorage - we want data to persist across sessions
+        // Only clear the in-memory state
+        console.log('[QuizStore] Clearing in-memory state for user:', currentUserId);
         set({ 
           selectedCompetitions: [],
           currentUserId: null

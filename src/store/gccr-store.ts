@@ -251,9 +251,9 @@ export const useGccrStore = create<GccrState>()(
       
       clearUserData: () => {
         const { currentUserId } = get();
-        if (currentUserId) {
-          removeUserData(currentUserId, STORAGE_KEYS.GCCR_FAVORITES);
-        }
+        // Note: We DON'T remove from localStorage - we want data to persist across sessions
+        // Only clear the in-memory state
+        console.log('[GccrStore] Clearing in-memory state for user:', currentUserId);
         set({ 
           favorites: new Set<string>(),
           currentUserId: null,

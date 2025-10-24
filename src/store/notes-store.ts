@@ -163,9 +163,9 @@ export const useNotesStore = create<NotesState>()(
 
       clearUserData: () => {
         const { currentUserId } = get();
-        if (currentUserId) {
-          removeUserData(currentUserId, STORAGE_KEYS.NOTES);
-        }
+        // Note: We DON'T remove from localStorage - we want data to persist across sessions
+        // Only clear the in-memory state
+        console.log('[NotesStore] Clearing in-memory state for user:', currentUserId);
         set({ 
           notes: [], 
           currentUserId: null,

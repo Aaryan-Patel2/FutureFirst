@@ -243,10 +243,9 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
       
       clearUserData: () => {
         const { currentUserId } = get();
-        if (currentUserId) {
-          removeUserData(currentUserId, STORAGE_KEYS.AI_CONVERSATIONS);
-        }
-        console.log('Clearing user data');
+        // Note: We DON'T remove from localStorage - we want data to persist across sessions
+        // Only clear the in-memory state
+        console.log('[AiStudyBuddyStore] Clearing in-memory state for user:', currentUserId);
         set({
           conversations: [],
           activeConversationId: null,

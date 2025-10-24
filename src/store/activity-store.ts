@@ -94,10 +94,9 @@ export const useActivityStore = create<ActivityState>()(
         // Clear all user data
         clearUserData: () => {
           const { currentUserId } = get();
-          if (currentUserId) {
-            removeUserData(currentUserId, STORAGE_KEYS.ACTIVITY_LOG);
-          }
-          console.log('[ActivityStore] Clearing user data');
+          // Note: We DON'T remove from localStorage - we want data to persist across sessions
+          // Only clear the in-memory state
+          console.log('[ActivityStore] Clearing in-memory state for user:', currentUserId);
           set({
             currentUserId: null,
             activities: [],

@@ -24,11 +24,11 @@ export class UserDataManager {
   // Initialize all stores when user logs in
   async initializeUserData(userId: string) {
     if (this.currentUserId === userId && this.isInitialized) {
-      console.log('User data already initialized for user:', userId);
+      console.log('[UserDataManager] User data already initialized for user:', userId);
       return;
     }
 
-    console.log('Initializing user data for user:', userId);
+    console.log('[UserDataManager] Initializing user data for user:', userId);
     
     try {
       // Set current user in all stores
@@ -40,7 +40,7 @@ export class UserDataManager {
       const aiStore = useAiStudyBuddyStore.getState();
       const activityStore = useActivityStore.getState();
 
-      // Clear any previous user's data and set new user
+      // Clear any previous user's data and set new user (this also loads their data)
       await quizStore.setCurrentUser(userId);
       await notesStore.setCurrentUser(userId);
       await gccrStore.setCurrentUser(userId);
@@ -52,15 +52,23 @@ export class UserDataManager {
       this.currentUserId = userId;
       this.isInitialized = true;
       
-      console.log('Successfully initialized user data for:', userId);
+      console.log('[UserDataManager] Successfully initialized user data for:', userId);
+      console.log('[UserDataManager] Loaded data:');
+      console.log('  - Quiz competitions:', quizStore.selectedCompetitions.length);
+      console.log('  - Notes:', notesStore.notes.length);
+      console.log('  - Favorites:', gccrStore.favorites.size);
+      console.log('  - Tasks:', progressStore.tasks.length);
+      console.log('  - Conversations:', aiStore.conversations.length);
+      console.log('  - Activities:', activityStore.activities.length);
     } catch (error) {
-      console.error('Failed to initialize user data:', error);
+      console.error('[UserDataManager] Failed to initialize user data:', error);
+      throw error;
     }
   }
 
   // Clear all user data when user logs out
   clearAllUserData() {
-    console.log('Clearing all user data');
+    console.log('[UserDataManager] Clearing all user data');
     
     try {
       const userStore = useUserStore.getState();
@@ -71,7 +79,7 @@ export class UserDataManager {
       const aiStore = useAiStudyBuddyStore.getState();
       const activityStore = useActivityStore.getState();
 
-      // Clear all stores
+      // Clear all stores (this will clear their in-memory state but NOT localStorage)
       userStore.clearUserData(this.currentUserId || undefined);
       quizStore.clearUserData();
       notesStore.clearUserData();
@@ -83,9 +91,9 @@ export class UserDataManager {
       this.currentUserId = null;
       this.isInitialized = false;
       
-      console.log('Successfully cleared all user data');
+      console.log('[UserDataManager] Successfully cleared all in-memory user data (localStorage preserved)');
     } catch (error) {
-      console.error('Failed to clear user data:', error);
+      console.error('[UserDataManager] Failed to clear user data:', error);
     }
   }
 
