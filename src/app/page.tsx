@@ -3,16 +3,17 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signOut } from 'firebase/auth';
 import { useEffect } from 'react';
 import { useUserStore } from '@/store/user-store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/logo';
 import { testFirebaseConnection } from '@/lib/firebase-test';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LogOut } from 'lucide-react';
 
 export default function LoginPage() {
-  const { user, initAuthListener, loading } = useUserStore();
+  const { user, initAuthListener, loading, signOutLocal } = useUserStore();
 
   useEffect(() => {
     initAuthListener();
@@ -29,11 +30,17 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, googleProvider);
       console.log('Sign-in successful:', result.user);
     } catch (e: any) {
+      // Silently ignore cancelled popup requests (happens when user clicks sign-in multiple times)
+      if (e.code === 'auth/cancelled-popup-request') {
+        console.log('Previous popup request cancelled (new one initiated)');
+        return;
+      }
+      
       console.error('Google sign-in failed:', e);
       console.error('Error code:', e.code);
       console.error('Error message:', e.message);
       
-      // Show user-friendly error message
+      // Show user-friendly error message for actual errors
       if (e.code === 'auth/popup-closed-by-user') {
         console.log('User closed the popup');
       } else if (e.code === 'auth/popup-blocked') {
@@ -43,6 +50,17 @@ export default function LoginPage() {
       } else {
         alert(`Sign-in error: ${e.message}`);
       }
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await signOut(auth);
+      signOutLocal();
+      console.log('Successfully logged out');
+    } catch (e: any) {
+      console.error('Logout failed:', e);
+      alert('Failed to log out. Please try again.');
     }
   }
 
@@ -62,10 +80,10 @@ export default function LoginPage() {
         <Card className="w-full max-w-lg shadow-2xl bg-card/80 backdrop-blur-sm border-border">
           <CardContent className="p-8">
             <div className="text-center space-y-6">
-              {/* Success Icon */}
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-blue-600/20 border border-cyan-400/30">
-                <svg className="h-10 w-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              {/* Success Icon - Gold Checkmark */}
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2" style={{ backgroundColor: 'rgba(234, 168, 61, 0.2)', borderColor: '#EAA83D' }}>
+                <svg className="h-10 w-10" fill="none" stroke="#EAA83D" viewBox="0 0 24 24" strokeWidth="3">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               
@@ -102,7 +120,7 @@ export default function LoginPage() {
               </div>
               
               {/* Action Button */}
-              <div className="pt-4">
+              <div className="pt-4 space-y-3">
                 <Button asChild className="gold-gradient-button w-full" size="lg">
                   <Link href="/dashboard">
                     Continue to Dashboard
@@ -110,6 +128,17 @@ export default function LoginPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
                   </Link>
+                </Button>
+                
+                {/* Logout Button */}
+                <Button 
+                  onClick={handleLogout}
+                  variant="outline" 
+                  className="w-full hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-colors"
+                  size="lg"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log Out
                 </Button>
               </div>
             </div>

@@ -131,9 +131,9 @@ export default function AiStudyBuddyPage() {
                 className={cn(
                   'group relative flex items-start gap-2 rounded-md border px-3 py-2 transition-colors',
                   !isEditing && 'cursor-pointer hover:bg-secondary/60 hover:border-border',
-                  isActive ? 'bg-secondary ring-1' : 'border-transparent bg-muted/30'
+                  isActive ? 'bg-secondary' : 'border-transparent bg-muted/30'
                 )}
-                style={isActive ? { borderColor: 'rgba(234, 168, 61, 0.6)', ringColor: 'rgba(234, 168, 61, 0.4)' } : {}}
+                style={isActive ? { borderColor: 'rgba(234, 168, 61, 0.6)', boxShadow: '0 0 0 1px rgba(234, 168, 61, 0.4)' } : {}}
               >
                 <div className="flex-1 min-w-0">
                   {isEditing ? (

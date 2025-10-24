@@ -29,7 +29,7 @@ import {
 
 export default function NotebookPage() {
   const { notes, addNote, updateNote, deleteNote, toggleFavorite, setFileForDigitization, clearFileForDigitization } = useNotesStore();
-  const [activeNoteId, setActiveNoteId] = useState<number | null>(null);
+  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [isDigitizing, setIsDigitizing] = useState(false);
   const [editMode, setEditMode] = useState(true);
@@ -50,8 +50,8 @@ export default function NotebookPage() {
     setEditMode(true); // Always start in edit mode when selecting a new note
   };
 
-  const handleNewNote = () => {
-    const newNote = addNote({
+  const handleNewNote = async () => {
+    const newNote = await addNote({
       title: 'Untitled Note',
       content: '',
     });
