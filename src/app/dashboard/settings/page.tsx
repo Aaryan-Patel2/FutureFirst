@@ -210,7 +210,7 @@ export default function SettingsPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="animated-button">Update Profile</Button>
+                <Button type="submit" className="gold-gradient-button">Update Profile</Button>
               </form>
             </Form>
           </CardContent>
@@ -237,7 +237,7 @@ export default function SettingsPage() {
                         <h4 className="font-semibold">Password</h4>
                         <p className="text-sm text-muted-foreground">Last changed over a year ago</p>
                     </div>
-                     <Button variant="outline">Change Password</Button>
+                     <Button variant="outline" className="hover:bg-[#EAA83D] hover:text-[#000223] hover:border-[#EAA83D] active:bg-[#EAA83D] active:text-[#000223] transition-colors">Change Password</Button>
                 </div>
             </CardContent>
         </Card>

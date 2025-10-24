@@ -169,11 +169,11 @@ export function RaffleClient() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
-              <Button onClick={copyNamesToClipboard} className="flex-1">
+              <Button onClick={copyNamesToClipboard} className="flex-1 gold-gradient-button">
                 <Copy className="mr-2 h-4 w-4" />
                 Copy All Names
               </Button>
-              <Button onClick={openWheelOfNames} variant="outline" className="flex-1">
+              <Button onClick={openWheelOfNames} variant="outline" className="flex-1 hover:bg-[#EAA83D] hover:text-[#000223] hover:border-[#EAA83D] transition-colors">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Open Wheel of Names
               </Button>
@@ -191,7 +191,7 @@ export function RaffleClient() {
             <Button 
               onClick={() => setShowMasterView(false)} 
               variant="outline"
-              className="w-full"
+              className="w-full hover:bg-[#EAA83D] hover:text-[#000223] hover:border-[#EAA83D] transition-colors"
             >
               Back to Entry Form
             </Button>
@@ -217,7 +217,7 @@ export function RaffleClient() {
                 setCode('');
               }}
               variant="outline"
-              className="mt-4 border-green-600 text-green-700 hover:bg-green-600 hover:text-white hover:border-green-600"
+              className="mt-4 border-green-600 text-green-700 hover:bg-[#EAA83D] hover:text-[#000223] hover:border-[#EAA83D] transition-colors"
             >
               Enter Another Code
             </Button>
@@ -250,13 +250,13 @@ export function RaffleClient() {
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 disabled={isLoading}
-                className="text-center font-mono text-lg"
+                className="text-center font-mono text-lg gold-focus"
               />
             </div>
             <Button 
               type="submit" 
               disabled={isLoading || !code.trim()} 
-              className="w-full"
+              className="w-full gold-gradient-button"
             >
               {isLoading ? (
                 <>
@@ -280,7 +280,7 @@ export function RaffleClient() {
                 onClick={loadAllEntries}
                 disabled={loadingEntries}
                 variant="outline"
-                className="w-full"
+                className="w-full hover:bg-[#EAA83D] hover:text-[#000223] hover:border-[#EAA83D] transition-colors"
               >
                 {loadingEntries ? (
                   <>

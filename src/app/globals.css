@@ -8,10 +8,10 @@
     --background: 224 71% 4%; /* Deep Navy */
     --foreground: 210 40% 98%; /* Almost White */
     
-    --card: 224 71% 10%; /* Slightly lighter Navy for cards */
+    --card: 232 100% 7%; /* Defined Navy Blue */
     --card-foreground: 210 40% 98%;
 
-    --popover: 224 71% 4%;
+    --popover: 232 100% 7%;
     --popover-foreground: 210 40% 98%;
     
     --primary: 210 40% 98%; /* White for primary text on colored backgrounds */
@@ -46,9 +46,9 @@
     /* This can be removed if light mode is not needed, but keeping for reference */
     --background: 224 71% 4%;
     --foreground: 210 40% 98%;
-    --card: 224 71% 10%;
+    --card: 232 100% 7%;
     --card-foreground: 210 40% 98%;
-    --popover: 224 71% 4%;
+    --popover: 232 100% 7%;
     --popover-foreground: 210 40% 98%;
     --primary: 210 40% 98%;
     --primary-foreground: 224 71% 10%;
@@ -81,12 +81,14 @@
   }
   
   .gradient-border {
-    @apply p-[2px] bg-gradient-to-br from-cyan-400 via-purple-500 to-blue-500;
-    box-shadow: 0 0 15px 0px rgba(0, 255, 255, 0.3), 0 0 10px 0px rgba(128, 0, 128, 0.2);
+    @apply p-[2px];
+    background: #b6d0e2;
+    box-shadow: 0 0 15px 0px rgba(182, 208, 226, 0.4);
     transition: all 0.3s ease-in-out;
   }
   .gradient-border:hover {
-    box-shadow: 0 0 30px 0px rgba(0, 255, 255, 0.5), 0 0 20px 0px rgba(128, 0, 128, 0.4);
+    background: #EAA83D;
+    box-shadow: 0 0 25px 0px rgba(234, 168, 61, 0.6);
     transform: scale(1.02);
   }
 
@@ -98,6 +100,44 @@
   .animated-button:hover {
     background-position: 100% 0;
     transform: scale(1.05);
+  }
+
+  .gold-gradient-button {
+    @apply transition-all duration-300 ease-in-out;
+    background: linear-gradient(135deg, #EAA83D 0%, #F4C574 50%, #EAA83D 100%);
+    color: #000223;
+    background-size: 200% 100%;
+  }
+  .gold-gradient-button:hover {
+    background-position: 100% 0;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(234, 168, 61, 0.5);
+  }
+  .gold-gradient-button:active {
+    background: linear-gradient(135deg, #F4C574 0%, #EAA83D 50%, #F4C574 100%);
+    transform: scale(0.98);
+    box-shadow: 0 0 30px rgba(234, 168, 61, 0.7);
+  }
+
+  .gold-focus {
+    --tw-ring-color: #EAA83D !important;
+  }
+  .gold-focus:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #EAA83D;
+  }
+
+  .checkbox-gold {
+    border-color: #EAA83D;
+  }
+  .checkbox-gold[data-state="checked"] {
+    background-color: #EAA83D;
+    color: #000223;
+  }
+
+  .radio-gold {
+    border-color: #EAA83D;
+    color: #EAA83D;
   }
 
   .nav-link-hover {

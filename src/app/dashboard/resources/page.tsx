@@ -70,12 +70,12 @@ export default function QuickResourcesPage() {
              <Link href={resource.href} target="_blank" rel="noopener noreferrer" className="block h-full rounded-lg bg-card p-6 transition-all duration-300 hover:-translate-y-2">
                 <div className="flex items-center gap-4 mb-4">
                   <div className={`p-3 rounded-full bg-secondary`}>
-                    <resource.icon className={`h-6 w-6 text-cyan-400`} />
+                    <resource.icon className={`h-6 w-6 transition-colors`} style={{ color: '#EAA83D' }} />
                   </div>
                   <CardTitle className="text-lg text-foreground">{resource.title}</CardTitle>
                 </div>
                 <CardDescription>{resource.description}</CardDescription>
-                <ArrowUpRight className="absolute top-4 right-4 h-5 w-5 text-muted-foreground group-hover:text-cyan-400 transition-colors" />
+                <ArrowUpRight className="absolute top-4 right-4 h-5 w-5 text-muted-foreground transition-colors" style={{ color: 'inherit' }} />
             </Link>
           </div>
         ))}

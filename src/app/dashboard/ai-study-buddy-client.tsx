@@ -737,7 +737,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
         <div className="space-y-4">
           {effectiveConversation.messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
-              <Bot className="h-16 w-16 mx-auto mb-4 text-cyan-400" />
+              <Bot className="h-16 w-16 mx-auto mb-4" style={{ color: '#EAA83D' }} />
               <p>Start a conversation with your AI study buddy!</p>
               <p className="text-sm mt-2">Upload files or ask questions to get started.</p>
             </div>
@@ -746,7 +746,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
               <div key={index} className={cn('flex items-start gap-4', message.role === 'user' ? 'justify-end' : 'justify-start')}>
                 {message.role === 'assistant' && (
                   <Avatar className="h-9 w-9 bg-secondary text-foreground flex items-center justify-center shrink-0 border border-border">
-                    <Bot className="h-6 w-6 text-cyan-400" />
+                    <Bot className="h-6 w-6" style={{ color: '#EAA83D' }} />
                   </Avatar>
                 )}
                 <div className={cn('max-w-xs md:max-w-md lg:max-w-2xl rounded-lg px-4 py-3', message.role === 'user' ? 'bg-secondary text-secondary-foreground' : 'bg-card text-card-foreground')}>
@@ -838,7 +838,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask a question or upload a document..."
-              className="min-h-[44px] max-h-[200px] resize-none pr-20"
+              className="min-h-[44px] max-h-[200px] resize-none pr-20 gold-focus"
               disabled={loading}
             />
             <div className="absolute right-2 bottom-2 flex gap-1">
@@ -900,6 +900,7 @@ export function AiStudyBuddyClient({ conversationId }: { conversationId: string 
             type="submit" 
             disabled={loading || isUploading || (!input.trim() && files.length === 0)}
             className="h-11"
+            style={{ backgroundColor: '#EAA83D', color: '#000223' }}
           >
             <Send className="h-4 w-4" />
           </Button>

@@ -40,6 +40,12 @@ import { isWithinInterval, startOfDay, addDays, format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { competitions } from '@/lib/competitions';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { GripVertical, X } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 export default function DashboardHomePage() {
   const { user } = useUserStore();
@@ -83,6 +89,10 @@ export default function DashboardHomePage() {
   const { tasks } = useProgressStore();
   const { getWeeklyActivityData, totalPoints } = useActivityStore();
   const [isChartOpen, setIsChartOpen] = useState(true);
+  const [isCompetitionsDialogOpen, setIsCompetitionsDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedComps, setSelectedComps] = useState<string[]>([]);
+  const [rankedComps, setRankedComps] = useState<string[]>([]);
 
   const isSameDay = (date1: Date | string, date2: Date) => {
     const d1 = date1 instanceof Date ? date1 : new Date(date1);
@@ -106,6 +116,48 @@ export default function DashboardHomePage() {
     Activities: { label: 'Activity Count', color: 'hsl(180 80% 70%)' },
   };
 
+  // Competition selection handlers
+  const filteredCompetitions = useMemo(() => {
+    return competitions.filter(comp => 
+      comp.Event.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery]);
+
+  const toggleCompetition = (compName: string) => {
+    if (selectedComps.includes(compName)) {
+      setSelectedComps(selectedComps.filter(c => c !== compName));
+      setRankedComps(rankedComps.filter(c => c !== compName));
+    } else {
+      setSelectedComps([...selectedComps, compName]);
+      setRankedComps([...rankedComps, compName]);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent<HTMLLIElement>, index: number) => {
+    e.dataTransfer.setData('draggedIndex', index.toString());
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLIElement>, dropIndex: number) => {
+    const draggedIndex = parseInt(e.dataTransfer.getData('draggedIndex'));
+    const newRanked = [...rankedComps];
+    const draggedItem = newRanked[draggedIndex];
+    newRanked.splice(draggedIndex, 1);
+    newRanked.splice(dropIndex, 0, draggedItem);
+    setRankedComps(newRanked);
+  };
+
+  const saveCompetitions = () => {
+    useQuizStore.getState().setCompetitions(rankedComps);
+    setIsCompetitionsDialogOpen(false);
+  };
+
+  const openDialog = () => {
+    setSelectedComps([...selectedCompetitions]);
+    setRankedComps([...selectedCompetitions]);
+    setSearchQuery('');
+    setIsCompetitionsDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -124,13 +176,13 @@ export default function DashboardHomePage() {
         {/* Left Column */}
         <div className="space-y-6 lg:col-span-2">
           {/* Activity Progress */}
-           <Card className="hover:border-cyan-400/50 transition-all">
+           <Card className="transition-all duration-300 hover:border-[#EAA83D]">
             <Collapsible open={isChartOpen} onOpenChange={setIsChartOpen}>
               <CollapsibleTrigger asChild>
                 <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
                   <div className="flex-1">
                     <CardTitle className="flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-cyan-400" />
+                      <Zap className="h-5 w-5" style={{ color: '#EAA83D' }} />
                       Your Weekly Activity
                     </CardTitle>
                     <CardDescription>
@@ -155,13 +207,13 @@ export default function DashboardHomePage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div className="bg-secondary/50 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-cyan-400">
+                      <div className="text-2xl font-bold" style={{ color: '#EAA83D' }}>
                         {weeklyChartData.reduce((sum, day) => sum + day.Points, 0)}
                       </div>
                       <div className="text-xs text-muted-foreground">Points This Week</div>
                     </div>
                     <div className="bg-secondary/50 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-cyan-400">
+                      <div className="text-2xl font-bold" style={{ color: '#EAA83D' }}>
                         {weeklyChartData.reduce((sum, day) => sum + day.Activities, 0)}
                       </div>
                       <div className="text-xs text-muted-foreground">Activities This Week</div>
@@ -195,7 +247,7 @@ export default function DashboardHomePage() {
                       <TrendingUp className="inline h-4 w-4 text-green-400 mr-1" />
                       Keep up the great work!
                     </div>
-                    <Button asChild variant="link" className="px-0 text-cyan-400">
+                    <Button asChild variant="link" className="px-0" style={{ color: '#EAA83D' }}>
                       <Link href="/dashboard/progress">
                         View Progress Details <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
@@ -220,7 +272,7 @@ export default function DashboardHomePage() {
             <CardContent>
               {loadingFavorites ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2" style={{ borderColor: '#EAA83D' }}></div>
                   Loading favorites...
                 </div>
               ) : favoritedFiles.length > 0 ? (
@@ -232,7 +284,7 @@ export default function DashboardHomePage() {
                     return (
                       <li key={file.id} className="flex items-center gap-3">
                         {isFolder ? (
-                          <Folder className="h-5 w-5 text-cyan-400" />
+                          <Folder className="h-5 w-5" style={{ color: '#EAA83D' }} />
                         ) : (
                           <FileText className="h-5 w-5 text-muted-foreground" />
                         )}
@@ -251,7 +303,7 @@ export default function DashboardHomePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BookOpen className="text-cyan-400" /> Favorited Notes
+                <BookOpen style={{ color: '#EAA83D' }} /> Favorited Notes
               </CardTitle>
               <CardDescription>
                 Your most important notes, front and center.
@@ -300,7 +352,7 @@ export default function DashboardHomePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Trophy className="text-cyan-400" /> Your Competitions
+                <Trophy style={{ color: '#EAA83D' }} /> Your Competitions
               </CardTitle>
               <CardDescription>
                 Events selected from the quiz.
@@ -314,9 +366,100 @@ export default function DashboardHomePage() {
                   </li>
                 ))}
               </ul>
-              <Button asChild variant="secondary" className="w-full mt-4">
-                <Link href="/dashboard/quiz">Retake Quiz</Link>
-              </Button>
+              <div className="flex gap-2 mt-4">
+                <Button asChild variant="secondary" className="flex-1">
+                  <Link href="/dashboard/quiz">Retake Quiz</Link>
+                </Button>
+                <Dialog open={isCompetitionsDialogOpen} onOpenChange={setIsCompetitionsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="secondary" className="flex-1" onClick={openDialog}>
+                      Change Competitions
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+                    <DialogHeader>
+                      <DialogTitle>Select & Rank Your Competitions</DialogTitle>
+                      <DialogDescription>
+                        Search and select competitions, then drag to rank them in order of preference.
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="grid grid-cols-2 gap-4 flex-1 overflow-hidden">
+                      {/* Available Competitions */}
+                      <div className="flex flex-col space-y-2">
+                        <h3 className="font-semibold text-sm">Available Competitions ({filteredCompetitions.length})</h3>
+                        <Input 
+                          placeholder="Search competitions..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="gold-focus"
+                        />
+                        <ScrollArea className="flex-1 border rounded-md p-2">
+                          <div className="space-y-1">
+                            {filteredCompetitions.map((comp) => (
+                              <button
+                                key={comp.Event}
+                                onClick={() => toggleCompetition(comp.Event)}
+                                className={cn(
+                                  'w-full text-left text-sm p-2 rounded hover:bg-secondary transition-colors',
+                                  selectedComps.includes(comp.Event) && 'bg-secondary'
+                                )}
+                                style={selectedComps.includes(comp.Event) ? { borderLeft: '3px solid #EAA83D' } : {}}
+                              >
+                                {comp.Event}
+                              </button>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </div>
+
+                      {/* Selected & Ranked */}
+                      <div className="flex flex-col space-y-2">
+                        <h3 className="font-semibold text-sm">Your Ranked Competitions ({rankedComps.length})</h3>
+                        <p className="text-xs text-muted-foreground">Drag to reorder</p>
+                        <ScrollArea className="flex-1 border rounded-md p-2">
+                          <ul className="space-y-2">
+                            {rankedComps.map((comp, index) => (
+                              <li
+                                key={comp}
+                                className="flex items-center gap-2 p-2 rounded-md border bg-secondary cursor-grab active:cursor-grabbing"
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, index)}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) => handleDrop(e, index)}
+                              >
+                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium text-sm" style={{ color: '#EAA83D' }}>{index + 1}.</span>
+                                <span className="flex-1 text-sm">{comp}</span>
+                                <button
+                                  onClick={() => toggleCompetition(comp)}
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </li>
+                            ))}
+                            {rankedComps.length === 0 && (
+                              <p className="text-sm text-muted-foreground text-center py-8">
+                                No competitions selected yet
+                              </p>
+                            )}
+                          </ul>
+                        </ScrollArea>
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsCompetitionsDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={saveCompetitions} className="gold-gradient-button">
+                        Save Competitions
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -103,7 +103,7 @@ export default function LoginPage() {
               
               {/* Action Button */}
               <div className="pt-4">
-                <Button asChild className="animated-button w-full" size="lg">
+                <Button asChild className="gold-gradient-button w-full" size="lg">
                   <Link href="/dashboard">
                     Continue to Dashboard
                     <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,12 +126,12 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
-      <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border-border">
+      <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm" style={{ borderColor: '#EAA83D' }}>
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             <Logo />
           </div>
-          <CardTitle className="text-3xl font-bold">Welcome to <span className="gradient-text">FutureFirst</span></CardTitle>
+          <CardTitle className="text-3xl font-bold">Welcome to <span style={{ color: '#EAA83D' }}>FutureFirst</span></CardTitle>
           <CardDescription>Your competitive advantage starts here.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -139,7 +139,7 @@ export default function LoginPage() {
             <p className="text-center text-sm text-muted-foreground">
               Please sign in to access your dashboard. Access is restricted to authorized members.
             </p>
-            <Button onClick={handleGoogleSignIn} className="w-full animated-button" size="lg">
+            <Button onClick={handleGoogleSignIn} className="w-full gold-gradient-button" size="lg">
               <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 64.5C307.4 99.4 280.7 86 248 86c-84.3 0-152.3 67.8-152.3 151.4s68 151.4 152.3 151.4c97.9 0 130.4-76.4 134.6-114.3H248v-85.3h236.1c2.3 12.7 3.9 26.9 3.9 41.4z"></path></svg>
               Sign in with Google
             </Button>

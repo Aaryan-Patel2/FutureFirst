@@ -55,7 +55,7 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild className="hover:bg-[#EAA83D] hover:text-[#000223] focus:bg-[#EAA83D] focus:text-[#000223] cursor-pointer">
             <Link href="/dashboard/settings">
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
@@ -63,7 +63,7 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
+        <DropdownMenuItem onClick={handleLogout} className="hover:bg-[#EAA83D] hover:text-[#000223] focus:bg-[#EAA83D] focus:text-[#000223] cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

@@ -1,4 +1,4 @@
-# **App Name**: FBLA Edge
+# **App Name**: FutureFirst
 
 ## Core Features:
 

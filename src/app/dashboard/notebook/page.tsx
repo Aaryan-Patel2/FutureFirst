@@ -133,8 +133,8 @@ export default function NotebookPage() {
       <Card className="md:col-span-1 lg:col-span-1 flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
           <CardTitle className="text-lg">My Notes</CardTitle>
-          <Button variant="ghost" size="icon" onClick={handleNewNote}>
-            <PlusCircle className="h-5 w-5 text-cyan-400" />
+          <Button variant="ghost" size="icon" onClick={handleNewNote} className="gold-gradient-button">
+            <PlusCircle className="h-5 w-5" />
           </Button>
         </CardHeader>
         <ScrollArea className="flex-1">
@@ -151,7 +151,6 @@ export default function NotebookPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold break-all leading-5">{note.title}</h3>
-                    <p className="text-sm text-muted-foreground truncate mt-1">{note.lastModified}</p>
                   </div>
                   <button
                     onClick={(e) => {
@@ -272,7 +271,7 @@ export default function NotebookPage() {
             <FileText className="h-16 w-16 mb-4" />
             <h2 className="text-2xl font-semibold">No note selected</h2>
             <p>Select a note from the list or create a new one.</p>
-            <Button className="mt-4 animated-button" onClick={handleNewNote}>
+            <Button className="mt-4 gold-gradient-button" onClick={handleNewNote}>
               <PlusCircle className="h-4 w-4 mr-2" />
               Create Note
             </Button>

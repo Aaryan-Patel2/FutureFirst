@@ -123,15 +123,18 @@ export default function ProgressPlanPage() {
         <Card>
           <CardHeader>
             <CardTitle>My Progress Plan</CardTitle>
-            <CardDescription>Track your study tasks and stay on top of your goals. Currently viewing: <span className="text-cyan-400 font-semibold">{currentViewText()}</span> tasks.</CardDescription>
+            <CardDescription>Track your study tasks and stay on top of your goals. Currently viewing: <span style={{ color: '#EAA83D' }} className="font-semibold">{currentViewText()}</span> tasks.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="w-full bg-muted rounded-full h-2.5">
-              <div className="bg-cyan-400 h-2.5 rounded-full transition-all duration-500" style={{ width: `${progressPercentage}%` }}></div>
+              <div className="h-2.5 rounded-full transition-all duration-500" style={{ width: `${progressPercentage}%`, backgroundColor: '#EAA83D' }}></div>
             </div>
             <p className="text-right text-sm text-muted-foreground mt-2">{completedTasks} of {totalTasks} tasks completed</p>
           </CardContent>
         </Card>
+
+        {/* Activity Points Guide - moved here */}
+        <ActivityPointsGuide />
         
         <Card>
           <CardHeader>
@@ -188,12 +191,12 @@ export default function ProgressPlanPage() {
               }}
               modifiersStyles={{
                 hasTask: {
-                    border: '2px solid hsl(var(--accent))',
-                    color: 'hsl(var(--accent))'
+                    border: '2px solid #EAA83D',
+                    color: '#EAA83D'
                 },
                 selected: {
-                    backgroundColor: 'hsl(var(--accent))',
-                    color: 'hsl(var(--accent-foreground))'
+                    backgroundColor: '#EAA83D',
+                    color: '#000223'
                 }
               }}
             />
@@ -204,7 +207,7 @@ export default function ProgressPlanPage() {
                 <CardTitle>Manage Tasks</CardTitle>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button size="sm" className="animated-button"><Plus className="h-4 w-4 mr-2" /> Add Task</Button>
+                        <Button size="sm" className="gold-gradient-button"><Plus className="h-4 w-4 mr-2" /> Add Task</Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -218,13 +221,13 @@ export default function ProgressPlanPage() {
                             <Label htmlFor="task-name" className="text-right">
                             Task
                             </Label>
-                            <Input id="task-name" value={taskName} onChange={(e) => setTaskName(e.target.value)} className="col-span-3" />
+                            <Input id="task-name" value={taskName} onChange={(e) => setTaskName(e.target.value)} className="col-span-3 gold-focus" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="task-category" className="text-right">
                             Category
                             </Label>
-                            <Input id="task-category" value={taskCategory} onChange={(e) => setTaskCategory(e.target.value)} className="col-span-3" />
+                            <Input id="task-category" value={taskCategory} onChange={(e) => setTaskCategory(e.target.value)} className="col-span-3 gold-focus" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="task-due-date" className="text-right">
@@ -235,7 +238,7 @@ export default function ProgressPlanPage() {
                                 <Button
                                     variant={"outline"}
                                     className={cn(
-                                    "col-span-3 justify-start text-left font-normal",
+                                    "col-span-3 justify-start text-left font-normal gold-focus",
                                     !taskDueDate && "text-muted-foreground"
                                     )}
                                 >
@@ -249,6 +252,12 @@ export default function ProgressPlanPage() {
                                         selected={taskDueDate}
                                         onSelect={setTaskDueDate}
                                         initialFocus
+                                        modifiersStyles={{
+                                          selected: {
+                                            backgroundColor: '#EAA83D',
+                                            color: '#000223'
+                                          }
+                                        }}
                                     />
                                 </PopoverContent>
                             </Popover>
@@ -258,15 +267,12 @@ export default function ProgressPlanPage() {
                             <DialogClose asChild>
                                 <Button type="button" variant="secondary">Cancel</Button>
                             </DialogClose>
-                            <Button type="submit" onClick={handleAddTask}>Add Task</Button>
+                            <Button type="submit" onClick={handleAddTask} className="gold-gradient-button">Add Task</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
           </CardHeader>
         </Card>
-        
-        {/* Activity Points Guide */}
-        <ActivityPointsGuide />
       </div>
     </div>
   );

@@ -146,7 +146,7 @@ export function QuizClient() {
   if (isLoading) {
       return (
           <div className="flex flex-col items-center justify-center text-center p-8 space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin text-cyan-400" />
+              <Loader2 className="h-12 w-12 animate-spin" style={{ color: '#EAA83D' }} />
               <h2 className="text-2xl font-semibold">Finding your perfect match...</h2>
               <p className="text-muted-foreground">Our AI advisor is analyzing your responses.</p>
           </div>
@@ -158,7 +158,7 @@ export function QuizClient() {
       <>
         <Card className="bg-card/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Lightbulb className="text-cyan-400" /> Quiz Results</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Lightbulb style={{ color: '#EAA83D' }} /> Quiz Results</CardTitle>
             <CardDescription>Based on your answers, here are our recommendations.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -176,7 +176,7 @@ export function QuizClient() {
                           onDrop={(e) => handleDrop(e, index)}
                       >
                           <GripVertical className="h-5 w-5 text-muted-foreground" />
-                          <span className="font-medium text-cyan-400">{index + 1}.</span>
+                          <span className="font-medium" style={{ color: '#EAA83D' }}>{index + 1}.</span>
                           <span>{rec}</span>
                       </li>
                   ))}
@@ -193,7 +193,7 @@ export function QuizClient() {
                   <Button 
                     onClick={handleReturnToDashboard}
                     variant="default" 
-                    className="animated-button"
+                    className="gold-gradient-button"
                   >
                     <Home className="mr-2 h-4 w-4" />
                     Save & Return to Dashboard
@@ -220,6 +220,7 @@ export function QuizClient() {
                                     onChange={(e) => setTagInput(e.target.value)}
                                     onKeyDown={handleTagKeyDown}
                                     disabled={tags.length >= 5}
+                                    className="gold-focus"
                                 />
                                 {tags.length > 0 && (
                                     <div className="flex flex-wrap gap-2 pt-2">
@@ -235,7 +236,7 @@ export function QuizClient() {
                                 )}
                             </div>
                             <div className="space-y-2">
-                                <Label>Number of Recommendations: <span className="text-cyan-400 font-bold">{refineCount}</span></Label>
+                                <Label>Number of Recommendations: <span style={{ color: '#EAA83D' }} className="font-bold">{refineCount}</span></Label>
                                 <Slider
                                     value={[refineCount]}
                                     onValueChange={(value) => setRefineCount(value[0])}
@@ -247,7 +248,7 @@ export function QuizClient() {
                         </div>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleRefineSubmit} className="animated-button">
+                            <AlertDialogAction onClick={handleRefineSubmit} className="gold-gradient-button">
                                 <BrainCircuit className="mr-2 h-4 w-4" />
                                 Re-run with Tags
                             </AlertDialogAction>
@@ -294,7 +295,7 @@ export function QuizClient() {
                             defaultValue={[field.value]}
                             onValueChange={(value) => field.onChange(value[0])}
                          />
-                         <span className="font-bold text-lg text-cyan-400 w-8 text-center">{field.value}</span>
+                         <span className="font-bold text-lg w-8 text-center" style={{ color: '#EAA83D' }}>{field.value}</span>
                        </div>
                     </FormControl>
                     <FormDescription>
@@ -332,7 +333,7 @@ export function QuizClient() {
                   ) : (
                     <Textarea
                       placeholder="Answer in 2-3 sentences..."
-                      className="resize-none"
+                      className="resize-none gold-focus"
                       {...field}
                     />
                   )}
@@ -352,6 +353,7 @@ export function QuizClient() {
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleTagKeyDown}
                 disabled={tags.length >= 5}
+                className="gold-focus"
             />
             {tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-2">
@@ -369,7 +371,7 @@ export function QuizClient() {
 
 
         <div className="text-center">
-            <Button type="submit" disabled={isLoading} size="lg" className='animated-button'>
+            <Button type="submit" disabled={isLoading} size="lg" className='gold-gradient-button'>
             {isLoading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (

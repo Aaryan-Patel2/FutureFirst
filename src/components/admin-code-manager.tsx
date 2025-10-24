@@ -75,7 +75,7 @@ export function AdminCodeManager() {
                 value={newCode}
                 onChange={(e) => setNewCode(e.target.value.toUpperCase())}
                 disabled={isAdding}
-                className="font-mono"
+                className="font-mono gold-focus"
               />
             </div>
             
@@ -87,6 +87,7 @@ export function AdminCodeManager() {
                 value={newDate}
                 onChange={(e) => setNewDate(e.target.value)}
                 disabled={isAdding}
+                className="gold-focus"
               />
             </div>
           </div>
@@ -100,13 +101,14 @@ export function AdminCodeManager() {
               onChange={(e) => setNewDescription(e.target.value)}
               disabled={isAdding}
               rows={2}
+              className="gold-focus"
             />
           </div>
           
           <Button 
             type="submit" 
             disabled={isAdding || !newCode.trim() || !newDate}
-            className="w-full"
+            className="w-full gold-gradient-button"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Code

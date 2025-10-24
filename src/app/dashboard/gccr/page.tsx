@@ -349,7 +349,7 @@ export default function GccrPage() {
                           </TableCell>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-3">
-                              <Icon className={`h-5 w-5 ${item.type === 'folder' ? 'text-cyan-400' : 'text-muted-foreground'}`} />
+                              <Icon className={`h-5 w-5 ${item.type === 'folder' ? '' : 'text-muted-foreground'}`} style={item.type === 'folder' ? { color: '#EAA83D' } : {}} />
                               <span className="truncate">{item.name}</span>
                             </div>
                           </TableCell>

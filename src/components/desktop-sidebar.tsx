@@ -65,7 +65,7 @@ export function DesktopSidebar() {
           {!isCollapsed && (
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
               <Logo />
-              <span className="text-lg">FutureFirst</span>
+              <span className="text-lg" style={{ color: '#EAA83D' }}>FutureFirst</span>
             </Link>
           )}
           {isCollapsed && (
@@ -88,8 +88,9 @@ export function DesktopSidebar() {
                     className={cn(
                         "w-full transition-all",
                         isCollapsed ? "justify-center px-2" : "justify-start",
-                        isActive ? "bg-secondary font-semibold text-cyan-400" : "text-muted-foreground"
+                        isActive ? "bg-secondary font-semibold" : "text-muted-foreground"
                     )}
+                    style={isActive ? { color: '#EAA83D' } : {}}
                   >
                     <Link href={item.href} className="nav-link-hover flex items-center gap-3">
                       <Icon className="h-5 w-5 shrink-0" />

@@ -7,7 +7,7 @@ export default function RafflePage() {
     <div className="container mx-auto max-w-4xl py-8">
       <Card>
         <CardHeader className="text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full mb-4" style={{ backgroundColor: '#EAA83D20', color: '#EAA83D' }}>
             <Gift className="h-8 w-8" />
           </div>
           <CardTitle className="text-3xl font-bold">Study Session Raffle</CardTitle>
