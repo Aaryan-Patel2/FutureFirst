@@ -3,7 +3,6 @@
 import { create } from 'zustand';
 import { persist, subscribeWithSelector } from 'zustand/middleware';
 import { saveUserData, loadUserData, removeUserData, STORAGE_KEYS } from '@/lib/user-localStorage';
-import { useActivityStore } from './activity-store';
 
 export interface Task {
   id: string;
@@ -104,9 +103,8 @@ export const useProgressStore = create<ProgressState>()(
             };
           });
 
-          // Log activity
-          const activityStore = useActivityStore.getState();
-          await activityStore.logActivity('TASK_CREATED', { taskTitle: newTask.title });
+          // Note: Task creation no longer earns points (tracked but not rewarded)
+          // Points are earned through proactive engagement activities only
 
           // Save to localStorage
           await get().syncToLocalStorage(currentUserId);
@@ -179,11 +177,8 @@ export const useProgressStore = create<ProgressState>()(
             };
           });
 
-          // Log activity only when completing a task (not uncompleting)
-          if (!wasCompleted && task) {
-            const activityStore = useActivityStore.getState();
-            await activityStore.logActivity('TASK_COMPLETED', { taskTitle: task.title });
-          }
+          // Note: Task completion no longer earns points (tracked but not rewarded)
+          // Points are earned through proactive engagement activities only
 
           // Save to localStorage
           await get().syncToLocalStorage(currentUserId);

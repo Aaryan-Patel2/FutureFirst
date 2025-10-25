@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { produce } from 'immer';
 import { saveUserData, loadUserData, removeUserData, STORAGE_KEYS } from '@/lib/user-localStorage';
+import { useActivityStore } from './activity-store';
 
 export interface Message {
   role: 'user' | 'assistant';
@@ -100,6 +101,9 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
           })
         );
         
+        // Note: Starting a conversation doesn't earn points anymore
+        // Points are only earned through AI_CONVERSATION_CONTINUED (when messages are sent)
+        
         // Save to localStorage
         const updatedConversations = get().conversations;
         saveUserData(effectiveUserId, STORAGE_KEYS.AI_CONVERSATIONS, updatedConversations);
@@ -159,6 +163,13 @@ export const useAiStudyBuddyStore = create<AiStudyBuddyState>()(
             }
           })
         );
+        
+        // Log activity when user sends a message (not when AI responds)
+        // Under new system: AI_CONVERSATION_CONTINUED earns 1 point, max 3 per day
+        if (message.role === 'user') {
+          const activityStore = useActivityStore.getState();
+          await activityStore.logActivity('AI_CONVERSATION_CONTINUED', { conversationId });
+        }
         
         // Save to localStorage
         const updatedConversations = get().conversations;

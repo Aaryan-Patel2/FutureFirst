@@ -2,39 +2,23 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ACTIVITY_POINTS, getActivityDisplayName, getActivityIcon, ActivityType } from '@/store/activity-store';
-import { Info } from 'lucide-react';
+import { ACTIVITY_POINTS, DAILY_ACTIVITY_LIMITS, getActivityDisplayName, getActivityIcon, ActivityType } from '@/store/activity-store';
+import { Award } from 'lucide-react';
 
 export function ActivityPointsGuide() {
-  // Group activities by point value
-  const activityGroups = [
+  // Only show point-earning activities
+  const pointEarningActivities = [
     {
-      title: 'High Value Activities',
-      color: 'bg-yellow-500/20 text-yellow-400 border-yellow-400/50',
-      activities: [
-        'AI_CONVERSATION_STARTED',
-        'QUIZ_TAKEN',
-      ] as ActivityType[],
+      type: 'AI_CONVERSATION_CONTINUED' as ActivityType,
+      description: 'Continue conversations with AI Study Buddy',
     },
     {
-      title: 'Medium Value Activities',
-      color: 'bg-cyan-500/20 text-cyan-400 border-cyan-400/50',
-      activities: [
-        'TASK_COMPLETED',
-        'NOTE_CREATED',
-        'AI_CONVERSATION_CONTINUED',
-        'DOCUMENT_UPLOADED',
-      ] as ActivityType[],
+      type: 'NOTE_EDITED' as ActivityType,
+      description: 'Make meaningful edits to your notes',
     },
     {
-      title: 'Engagement Activities',
-      color: 'bg-green-500/20 text-green-400 border-green-400/50',
-      activities: [
-        'TASK_CREATED',
-        'RAFFLE_CODE_ENTERED',
-        'NOTE_EDITED',
-        'GCCR_FAVORITED',
-      ] as ActivityType[],
+      type: 'QUIZ_TAKEN' as ActivityType,
+      description: 'Complete the recommendation quiz',
     },
   ];
 
@@ -42,42 +26,52 @@ export function ActivityPointsGuide() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Info className="h-5 w-5 text-cyan-400" />
+          <Award className="h-5 w-5" style={{ color: '#EAA83D' }} />
           How to Earn Activity Points
         </CardTitle>
         <CardDescription>
-          Stay active and engaged to earn points! Here's what counts:
+          Points reward CONSISTENCY, not quantity. Engage daily to build your streak!
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {activityGroups.map((group) => (
-          <div key={group.title} className="space-y-3">
-            <h3 className="font-semibold text-sm flex items-center gap-2">
-              <div className={`h-2 w-2 rounded-full ${group.color.split(' ')[0]}`} />
-              {group.title}
-            </h3>
-            <div className="space-y-2">
-              {group.activities.map((activityType) => (
+        <div className="space-y-3">
+          <div className="space-y-2">
+            {pointEarningActivities.map(({ type, description }) => {
+              const limit = DAILY_ACTIVITY_LIMITS[type as keyof typeof DAILY_ACTIVITY_LIMITS];
+              return (
                 <div
-                  key={activityType}
+                  key={type}
                   className="flex items-center justify-between p-3 rounded-md bg-secondary/50 hover:bg-secondary transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{getActivityIcon(activityType)}</span>
-                    <span className="text-sm">{getActivityDisplayName(activityType)}</span>
+                  <div className="flex items-center gap-3 flex-1">
+                    <span className="text-2xl">{getActivityIcon(type)}</span>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">{getActivityDisplayName(type)}</div>
+                      <div className="text-xs text-muted-foreground">{description}</div>
+                      <div className="text-xs mt-1" style={{ color: '#EAA83D' }}>
+                        Max {limit} per day
+                      </div>
+                    </div>
                   </div>
-                  <Badge variant="outline" className={group.color}>
-                    +{ACTIVITY_POINTS[activityType]} pts
+                  <Badge 
+                    variant="outline" 
+                    style={{ 
+                      backgroundColor: 'rgba(234, 168, 61, 0.2)', 
+                      color: '#EAA83D',
+                      borderColor: 'rgba(234, 168, 61, 0.5)'
+                    }}
+                  >
+                    +{ACTIVITY_POINTS[type]} pt
                   </Badge>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        ))}
+        </div>
         
         <div className="pt-4 border-t">
           <p className="text-sm text-muted-foreground text-center">
-            💡 <strong>Pro Tip:</strong> Complete tasks and engage with AI Study Buddy for maximum points!
+            💡 <strong>Pro Tip:</strong> Build a daily habit! Show up consistently to maximize your points over time.
           </p>
         </div>
       </CardContent>

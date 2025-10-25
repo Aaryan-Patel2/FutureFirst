@@ -5,17 +5,29 @@ import { persist, subscribeWithSelector } from 'zustand/middleware';
 import { saveUserData, loadUserData, removeUserData, STORAGE_KEYS } from '@/lib/user-localStorage';
 
 // Activity types and their point values
+// NEW SYSTEM: Focus on CONSISTENCY over quantity
+// Only reward proactive engagement activities, limited per day
 export const ACTIVITY_POINTS = {
-  AI_CONVERSATION_STARTED: 5,
+  // POINT-EARNING ACTIVITIES (1 point each, limited per day)
+  AI_CONVERSATION_CONTINUED: 1,  // Max 3 per day
+  NOTE_EDITED: 1,                 // Max 5 per day
+  QUIZ_TAKEN: 1,                  // Max 1 per day
+  
+  // NON-POINT ACTIVITIES (tracked but no points)
+  AI_CONVERSATION_STARTED: 0,
+  NOTE_CREATED: 0,
+  GCCR_FAVORITED: 0,
+  TASK_COMPLETED: 0,
+  TASK_CREATED: 0,
+  RAFFLE_CODE_ENTERED: 0,
+  DOCUMENT_UPLOADED: 0,
+} as const;
+
+// Daily limits for point-earning activities
+export const DAILY_ACTIVITY_LIMITS = {
   AI_CONVERSATION_CONTINUED: 3,
-  NOTE_CREATED: 3,
-  NOTE_EDITED: 2,
-  GCCR_FAVORITED: 1,
-  TASK_COMPLETED: 4,
-  TASK_CREATED: 2,
-  QUIZ_TAKEN: 5,
-  RAFFLE_CODE_ENTERED: 2,
-  DOCUMENT_UPLOADED: 3,
+  NOTE_EDITED: 5,
+  QUIZ_TAKEN: 1,
 } as const;
 
 export type ActivityType = keyof typeof ACTIVITY_POINTS;
@@ -107,7 +119,7 @@ export const useActivityStore = create<ActivityState>()(
 
         // Log a new activity
         logActivity: async (type: ActivityType, metadata?: Activity['metadata']) => {
-          const { currentUserId, activities } = get();
+          const { currentUserId, activities, dailyActivities } = get();
           if (!currentUserId) {
             console.warn('[ActivityStore] Cannot log activity: no user logged in');
             return;
@@ -116,6 +128,67 @@ export const useActivityStore = create<ActivityState>()(
           const now = new Date();
           const dateKey = now.toISOString().split('T')[0]; // YYYY-MM-DD
           const points = ACTIVITY_POINTS[type];
+
+          // Check daily limit for point-earning activities
+          if (points > 0 && type in DAILY_ACTIVITY_LIMITS) {
+            const limit = DAILY_ACTIVITY_LIMITS[type as keyof typeof DAILY_ACTIVITY_LIMITS];
+            const todayData = dailyActivities.get(dateKey);
+            
+            if (todayData) {
+              const todayCount = todayData.activities.filter(a => a.type === type && a.points > 0).length;
+              
+              if (todayCount >= limit) {
+                console.log(`[ActivityStore] Daily limit reached for ${type} (${todayCount}/${limit})`);
+                // Still log the activity but with 0 points
+                const newActivity: Activity = {
+                  id: `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                  type,
+                  timestamp: now,
+                  points: 0, // No points awarded due to daily limit
+                  metadata: { ...metadata, limitReached: true },
+                };
+                
+                const updatedActivities = [...activities, newActivity];
+                const updatedDailyActivities = new Map(dailyActivities);
+                const dayData = updatedDailyActivities.get(dateKey)!;
+                dayData.activities.push(newActivity);
+                updatedDailyActivities.set(dateKey, dayData);
+                
+                set({
+                  activities: updatedActivities,
+                  dailyActivities: updatedDailyActivities,
+                });
+                
+                await get().syncToLocalStorage(currentUserId);
+                return;
+              }
+            }
+          }
+
+          // Prevent duplicate activities within a short time window (5 seconds)
+          const recentActivities = activities.filter(a => {
+            const timeDiff = now.getTime() - new Date(a.timestamp).getTime();
+            return timeDiff < 5000 && a.type === type;
+          });
+
+          // Check for duplicate based on type and metadata
+          const isDuplicate = recentActivities.some(a => {
+            if (type === 'NOTE_EDITED' && metadata?.noteName && a.metadata?.noteName) {
+              return a.metadata.noteName === metadata.noteName;
+            }
+            if (type === 'TASK_COMPLETED' && metadata?.taskTitle && a.metadata?.taskTitle) {
+              return a.metadata.taskTitle === metadata.taskTitle;
+            }
+            if (type === 'AI_CONVERSATION_CONTINUED' && metadata?.conversationId && a.metadata?.conversationId) {
+              return a.metadata.conversationId === metadata.conversationId;
+            }
+            return false;
+          });
+
+          if (isDuplicate) {
+            console.log(`[ActivityStore] Skipped duplicate activity: ${type} (within 5s window)`);
+            return;
+          }
 
           const newActivity: Activity = {
             id: `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -129,8 +202,8 @@ export const useActivityStore = create<ActivityState>()(
           const updatedActivities = [...activities, newActivity];
 
           // Update daily activities map
-          const dailyActivities = new Map(get().dailyActivities);
-          const dayData = dailyActivities.get(dateKey) || {
+          const updatedDailyActivities = new Map(dailyActivities);
+          const dayData = updatedDailyActivities.get(dateKey) || {
             date: dateKey,
             activities: [],
             totalPoints: 0,
@@ -138,21 +211,21 @@ export const useActivityStore = create<ActivityState>()(
 
           dayData.activities.push(newActivity);
           dayData.totalPoints += points;
-          dailyActivities.set(dateKey, dayData);
+          updatedDailyActivities.set(dateKey, dayData);
 
           // Calculate new total points
           const totalPoints = get().totalPoints + points;
 
           set({
             activities: updatedActivities,
-            dailyActivities,
+            dailyActivities: updatedDailyActivities,
             totalPoints,
           });
 
           // Auto-sync to localStorage
           await get().syncToLocalStorage(currentUserId);
 
-          console.log(`[ActivityStore] Logged activity: ${type} (+${points} points)`);
+          console.log(`[ActivityStore] Logged activity: ${type} (+${points} points, total: ${totalPoints})`);
         },
 
         // Get weekly activity data for chart
@@ -283,11 +356,26 @@ export function getActivityDisplayName(type: ActivityType): string {
     GCCR_FAVORITED: 'Favorited Resource',
     TASK_COMPLETED: 'Completed Task',
     TASK_CREATED: 'Created Task',
-    QUIZ_TAKEN: 'Took Quiz',
+    QUIZ_TAKEN: 'Took Recommendation Quiz',
     RAFFLE_CODE_ENTERED: 'Entered Raffle',
     DOCUMENT_UPLOADED: 'Uploaded Document',
   };
   return names[type];
+}
+
+// Helper function to check if activity earns points
+export function isPointEarningActivity(type: ActivityType): boolean {
+  return type === 'AI_CONVERSATION_CONTINUED' || 
+         type === 'NOTE_EDITED' || 
+         type === 'QUIZ_TAKEN';
+}
+
+// Helper function to get daily limit for an activity
+export function getDailyLimit(type: ActivityType): number | null {
+  if (type in DAILY_ACTIVITY_LIMITS) {
+    return DAILY_ACTIVITY_LIMITS[type as keyof typeof DAILY_ACTIVITY_LIMITS];
+  }
+  return null;
 }
 
 // Helper function to get activity icon/emoji

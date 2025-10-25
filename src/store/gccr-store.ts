@@ -5,7 +5,6 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { GccrItem, googleDriveService } from '@/lib/google-drive-service';
 import { saveUserData, loadUserData, removeUserData, STORAGE_KEYS } from '@/lib/user-localStorage';
-import { useActivityStore } from './activity-store';
 
 export interface BreadcrumbItem {
   id: string;
@@ -116,14 +115,8 @@ export const useGccrStore = create<GccrState>()(
           };
         });
         
-        // Log activity when favoriting (not unfavoriting)
-        if (isFavoriting) {
-          const item = get().items.find(i => i.id === id);
-          if (item) {
-            const activityStore = useActivityStore.getState();
-            await activityStore.logActivity('GCCR_FAVORITED', { itemName: item.name });
-          }
-        }
+        // Note: Favoriting no longer earns points (tracked but not rewarded)
+        // Points are earned through proactive engagement activities only
         
         // Save to localStorage
         const { favorites } = get();

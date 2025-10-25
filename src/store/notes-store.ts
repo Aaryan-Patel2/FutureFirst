@@ -23,6 +23,7 @@ interface NotesState {
   notes: Note[];
   currentUserId: string | null;
   loading: boolean;
+  lastEditTimestamp: Map<string, number>; // Track last edit time per note for debouncing
   addNote: (note: Omit<Note, 'id' | 'lastModified' | 'isFavorite'>, userId?: string) => Promise<Note>;
   updateNote: (id: string, updates: Partial<Note>, userId?: string) => Promise<void>;
   deleteNote: (id: string, userId?: string) => Promise<void>;
@@ -41,6 +42,7 @@ export const useNotesStore = create<NotesState>()(
       notes: [],
       currentUserId: null,
       loading: false,
+      lastEditTimestamp: new Map<string, number>(),
 
       addNote: async (noteData, userId) => {
         const effectiveUserId = userId || get().currentUserId;
@@ -57,9 +59,8 @@ export const useNotesStore = create<NotesState>()(
 
         set((state) => ({ notes: [...state.notes, newNote] }));
         
-        // Log activity
-        const activityStore = useActivityStore.getState();
-        await activityStore.logActivity('NOTE_CREATED', { noteName: newNote.title });
+        // Note: Note creation no longer earns points (tracked but not rewarded)
+        // Points are earned through proactive engagement activities only
         
         // Save to localStorage
         const updatedNotes = [...get().notes];
@@ -82,11 +83,24 @@ export const useNotesStore = create<NotesState>()(
         }));
 
         // Log activity (only if content or title changed, not just favorites)
+        // AND only once every 30 seconds per note to prevent spam
         if (updates.content !== undefined || updates.title !== undefined) {
-          const note = get().notes.find(n => n.id === id);
-          if (note) {
-            const activityStore = useActivityStore.getState();
-            await activityStore.logActivity('NOTE_EDITED', { noteName: note.title });
+          const now = Date.now();
+          const lastEdit = get().lastEditTimestamp.get(id) || 0;
+          const timeSinceLastEdit = now - lastEdit;
+          
+          // Only log if it's been at least 30 seconds since last edit activity
+          if (timeSinceLastEdit > 30000) {
+            const note = get().notes.find(n => n.id === id);
+            if (note) {
+              const activityStore = useActivityStore.getState();
+              await activityStore.logActivity('NOTE_EDITED', { noteName: note.title });
+              
+              // Update the timestamp
+              const timestamps = new Map(get().lastEditTimestamp);
+              timestamps.set(id, now);
+              set({ lastEditTimestamp: timestamps });
+            }
           }
         }
 
@@ -169,7 +183,8 @@ export const useNotesStore = create<NotesState>()(
         set({ 
           notes: [], 
           currentUserId: null,
-          loading: false 
+          loading: false,
+          lastEditTimestamp: new Map<string, number>()
         });
       },
 
